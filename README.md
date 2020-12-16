@@ -1,3 +1,3 @@
 # ADURC
 
-![Node.js Package](https://github.com/adurc/core/workflows/Node.js%20Package/badge.svg?branch=main)
+![Node.js Package](https://github.com/adurc/driver-mssql/workflows/Node.js%20Package/badge.svg?branch=main)
