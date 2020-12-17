@@ -40,7 +40,6 @@ export class CriteriaBuilder {
 
         const possibleInto: string = parentContext ? `${parentContext.parentTempTable}_${parentContext.parentRelation.field.name}` : 'root';
         const fromTable: string = this.buildTableNameAccess(entity, 'root');
-        const sortField = this.getSortField(entity, projection);
         const columns = this.getColumnsSelected(entity, projection);
         const oneToManyRelations = this.getOneToManyRelationsSelected(entity, projection);
         const manyToOneRelations = this.getManyToOneRelationsSelected(entity, projection);
@@ -59,6 +58,20 @@ export class CriteriaBuilder {
             destField = entity.columns.find(x => x.info.name === parentContext.parentRelation.dest.field.name);
         }
 
+        let orderBy: string = pks.map(x => `[root].[${x.name}] ASC`).join(',');
+
+        if (projection.args && projection.args.order_by) {
+            const orderColumns: string[] = [];
+            for (const field in projection.args.order_by as Record<string, unknown>) {
+                if (Object.prototype.hasOwnProperty.call(projection.args.order_by, field)) {
+                    const desc = projection.args.order_by[field] === 'desc';
+                    const column = entity.columns.find(x => x.info.name === field);
+                    orderColumns.push(`[root].[${column.name}] ${desc ? 'DESC' : 'ASC'}`);
+                }
+            }
+            orderBy = orderColumns.join(',');
+        }
+
         const queryContext: QueryContextBuilder = {
             params: {},
             from: fromTable,
@@ -71,7 +84,7 @@ export class CriteriaBuilder {
                     ? [`INNER JOIN @${parentVariableTable} [parent] on ${pks.map(x => `[parent].[${x.info.name}] = [root].[${x.name}]`).join(' AND ')}`]
                     : []),
             wheres: [],
-            orderBy: `[root].[${sortField.name}] ${projection.args.sortOrder === 'DESC' ? 'DESC' : 'ASC'}`
+            orderBy,
         };
 
         if ('limit' in projection.args && !('offset' in projection.args)) {
@@ -255,24 +268,6 @@ export class CriteriaBuilder {
         return projection.fields
             .filter(x => x.type === 'field')
             .map(x => entity.columns.find(c => c.info.name === x.name));
-    }
-
-    private static getSortField(entity: SQLEntity, projection: ProjectionInfoExpand) {
-        const primaryColumn = entity.columns.find(x => x.info.directives.findIndex(c => c.name === 'pk') >= 0);
-
-        let sortField = projection.args.sortField
-            ? entity.columns.find(x => x.info.name === projection.args.sortField)
-            : null;
-
-        if (!sortField) {
-            sortField = primaryColumn;
-        }
-
-        if (!sortField) {
-            sortField = entity.columns[0];
-        }
-
-        return sortField;
     }
 
     public static buildTableNameAccess(entity: SQLEntity, alias: string): string {

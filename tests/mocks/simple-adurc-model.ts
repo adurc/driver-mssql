@@ -1,6 +1,6 @@
 import { AdurcModel } from '@adurc/core';
 
-export const AdurcModelId: AdurcModel = {
+export const SimpleAdurcModel: AdurcModel = {
     name: 'Fake',
     directives: [],
     fields: [
@@ -10,6 +10,13 @@ export const AdurcModelId: AdurcModel = {
             collection: false,
             nonNull: true,
             directives: [{ name: 'pk', args: {} }],
+        },
+        {
+            name: 'name',
+            type: 'string',
+            collection: false,
+            nonNull: true,
+            directives: [],
         }
     ],
 };
