@@ -166,7 +166,11 @@ export class SqlServerDriver extends AdurcDriver {
     }
 
     public async read(projection: ProjectionInfo): Promise<TDriverReadRes> {
+        console.log(`[MSSQL] READ - Projection: ${JSON.stringify(projection)}`);
+
         const queryResults = CriteriaBuilder.build(this.context, projection);
+
+        console.log(`[MSSQL] READ - Query Results: ${JSON.stringify(queryResults)}`);
 
         const request = this.pool.request();
 
@@ -180,11 +184,11 @@ export class SqlServerDriver extends AdurcDriver {
             queries.push(QueryContextPrinter.print(queryResult));
         }
 
-        const finallyQuery = queries.join('\n');
+        const rawQuery = queries.join('\n');
 
-        console.log('super query', finallyQuery);
+        console.log(`[MSSQL] READ - Raw query: ${rawQuery}`);
 
-        const result = await request.query(finallyQuery);
+        const result = await request.query(rawQuery);
 
         const output = ObjectExpander.buildReadOutput(this.context, projection, result.recordsets);
 
