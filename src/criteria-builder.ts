@@ -68,7 +68,7 @@ export class CriteriaBuilder {
             joins: parentContext
                 ? [`INNER JOIN #${parentContext.parentTempTable} [parent] on [parent].[${parentAlias}__${parentContext.parentRelation.source.field.name}] = [root].[${destField.name}]`]
                 : (parentVariableTable
-                    ? [`INNER JOIN @${parentVariableTable} [parent] on ${pks.map(x => `[parent].[${x.name}] = [root].[${x.name}]`).join(' AND ')}`]
+                    ? [`INNER JOIN @${parentVariableTable} [parent] on ${pks.map(x => `[parent].[${x.info.name}] = [root].[${x.name}]`).join(' AND ')}`]
                     : []),
             wheres: [],
             orderBy: `[root].[${sortField.name}] ${projection.args.sortOrder === 'DESC' ? 'DESC' : 'ASC'}`
