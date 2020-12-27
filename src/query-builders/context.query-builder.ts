@@ -37,7 +37,9 @@ export interface ITreeCondition {
 
 export type Condition = (IConditionQueryBuilder | ITreeCondition);
 
+export type TableColumnAccessor = { source: string, name: string };
 
+export type TableColumnOrder = TableColumnAccessor & { direction: 'ASC' | 'DESC' };
 
 export class FindContextQueryBuilder {
     public params: Record<string, unknown>;
@@ -47,6 +49,9 @@ export class FindContextQueryBuilder {
     public joins: IJoinQueryBuilder[];
     public into: string | null;
     public where: Condition[];
+    public orderBy: TableColumnOrder[];
+    public skip?: number;
+    public take?: number;
 
     public children: FindContextQueryBuilder[];
 
@@ -59,6 +64,7 @@ export class FindContextQueryBuilder {
         this.children = [];
         this.into = null;
         this.where = [];
+        this.orderBy = [];
     }
 
     public toSql(): string {
@@ -73,6 +79,10 @@ export class FindContextQueryBuilder {
         const chunks: string[] = [];
 
         chunks.push('SELECT');
+
+        if (this.skip === undefined && this.take !== undefined) {
+            chunks.push(`\tTOP ${this.take}`);
+        }
 
         const columns: string[] = [];
         for (const column of this.columns) {
@@ -106,6 +116,17 @@ export class FindContextQueryBuilder {
                     throw new Error('Not implemented subtree conditions');
                 } else if ('left' in condition) {
                     chunks.push(`\t${this.toSqlCondition(condition)}`);
+                }
+            }
+        }
+
+        if (this.orderBy.length > 0) {
+            chunks.push(`ORDER BY ${this.orderBy.map(x => `${this.toSqlColumn(x)} ${x.direction === 'ASC' ? 'ASC' : 'DESC'}`).join(',')}`);
+
+            if (this.skip !== undefined) {
+                chunks.push(`OFFSET ${this.skip} ROWS`);
+                if (this.take !== undefined) {
+                    chunks.push(`FETCH NEXT ${this.take} ROWS ONLY`);
                 }
             }
         }

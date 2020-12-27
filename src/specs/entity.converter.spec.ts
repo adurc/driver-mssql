@@ -6,7 +6,7 @@ import { SimpleAdurcModel, SimpleMSSQLEntity } from './mocks/simple-adurc-model'
 describe('entity converter tests', () => {
     it('convert simpleAdurcModel', () => {
         const models: AdurcModel[] = [SimpleAdurcModel];
-        const entities = EntityConverter.fromModels(models);
+        const entities = EntityConverter.fromModels('mssql', models);
         const expectedEntities: MSSQLEntity[] = [SimpleMSSQLEntity];
         expect(entities).toHaveLength(1);
         expect(entities[0]).toStrictEqual(expectedEntities[0]);

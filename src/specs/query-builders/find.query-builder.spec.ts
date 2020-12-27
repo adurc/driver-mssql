@@ -8,7 +8,7 @@ import { bagEntities } from '../mocks/bag-entities';
 describe('query builder find tests', () => {
     it('basic select query', () => {
         const models: AdurcModel[] = [SimpleAdurcModel];
-        const entities = EntityConverter.fromModels(models);
+        const entities = EntityConverter.fromModels('mssql', models);
 
         const context = FindQueryBuilder.build(entities, entities[0], {
             select: {
@@ -21,18 +21,10 @@ describe('query builder find tests', () => {
 
         expect(context).toBeInstanceOf(FindContextQueryBuilder);
 
-        expect(context).toEqual<FindContextQueryBuilder>(Object.assign(new FindContextQueryBuilder(), {
-            from: { table: 'Fake', as: 'root' },
-            columns: [
-                { source: 'root', name: 'id', as: 'id' },
-                { source: 'root', name: 'name', as: 'name' },
-            ],
-            temporalColumns: [],
-            into: null,
-            params: {},
-            joins: [],
-            children: [],
-        }));
+        expect(context.from).toEqual({ table: 'Fake', as: 'root' });
+        expect(context.columns).toHaveLength(2);
+        expect(context.columns[0]).toEqual({ source: 'root', name: 'id', as: 'id' });
+        expect(context.columns[1]).toEqual({ source: 'root', name: 'name', as: 'name' });
 
         expect(sql).toEqual(`
 SELECT
@@ -42,9 +34,100 @@ FROM [Fake] AS [root] WITH(NOLOCK)
 `.trim());
     });
 
+    it('order by a column', () => {
+        const models: AdurcModel[] = [SimpleAdurcModel];
+        const entities = EntityConverter.fromModels('mssql', models);
+
+        const context = FindQueryBuilder.build(entities, entities[0], {
+            select: {
+                id: true,
+                name: true,
+            },
+            orderBy: {
+                name: 'ASC',
+            }
+        });
+
+        const sql = context.toSql();
+
+        expect(context).toBeInstanceOf(FindContextQueryBuilder);
+        expect(context.orderBy).toHaveLength(1);
+        expect(context.orderBy[0]).toEqual({ source: 'root', name: 'name', direction: 'ASC' });
+
+
+        expect(sql).toEqual(`
+SELECT
+\t[root].[id] AS [id],
+\t[root].[name] AS [name]
+FROM [Fake] AS [root] WITH(NOLOCK)
+ORDER BY [root].[name] ASC
+`.trim());
+    });
+
+    it('skip & take (offset fetch)', () => {
+        const models: AdurcModel[] = [SimpleAdurcModel];
+        const entities = EntityConverter.fromModels('mssql', models);
+
+        const context = FindQueryBuilder.build(entities, entities[0], {
+            select: {
+                id: true,
+            },
+            orderBy: {
+                name: 'ASC',
+            },
+            skip: 100,
+            take: 50,
+        });
+
+        const sql = context.toSql();
+
+        expect(context).toBeInstanceOf(FindContextQueryBuilder);
+        expect(context.skip).toEqual(100);
+        expect(context.take).toEqual(50);
+
+
+        expect(sql).toEqual(`
+SELECT
+\t[root].[id] AS [id]
+FROM [Fake] AS [root] WITH(NOLOCK)
+ORDER BY [root].[name] ASC
+OFFSET 100 ROWS
+FETCH NEXT 50 ROWS ONLY
+`.trim());
+    });
+
+    it('take only (use top instead of fetch offset)', () => {
+        const models: AdurcModel[] = [SimpleAdurcModel];
+        const entities = EntityConverter.fromModels('mssql', models);
+
+        const context = FindQueryBuilder.build(entities, entities[0], {
+            select: {
+                id: true,
+            },
+            orderBy: {
+                name: 'ASC',
+            },
+            take: 50,
+        });
+
+        const sql = context.toSql();
+
+        expect(context).toBeInstanceOf(FindContextQueryBuilder);
+        expect(context.take).toEqual(50);
+
+
+        expect(sql).toEqual(`
+SELECT
+\tTOP 50
+\t[root].[id] AS [id]
+FROM [Fake] AS [root] WITH(NOLOCK)
+ORDER BY [root].[name] ASC
+`.trim());
+    });
+
     it('where for a column', () => {
         const models: AdurcModel[] = [SimpleAdurcModel];
-        const entities = EntityConverter.fromModels(models);
+        const entities = EntityConverter.fromModels('mssql', models);
 
         const context = FindQueryBuilder.build(entities, entities[0], {
             select: {
@@ -58,27 +141,13 @@ FROM [Fake] AS [root] WITH(NOLOCK)
         const sql = context.toSql();
 
         expect(context).toBeInstanceOf(FindContextQueryBuilder);
-
-        expect(context).toEqual<FindContextQueryBuilder>(Object.assign(new FindContextQueryBuilder(), {
-            from: { table: 'Fake', as: 'root' },
-            columns: [
-                { source: 'root', name: 'name', as: 'name' },
-            ],
-            temporalColumns: [],
-            into: null,
-            params: {
-                'root_id': 1,
-            },
-            joins: [],
-            children: [],
-            where: [
-                {
-                    left: { type: 'column', source: 'root', column: 'id' },
-                    operator: '=',
-                    right: { type: 'variable', name: 'root_id' },
-                }
-            ],
-        } as Partial<FindContextQueryBuilder>));
+        expect(context.where).toHaveLength(1);
+        expect(context.where[0]).toEqual({
+            left: { type: 'column', source: 'root', column: 'id' },
+            operator: '=',
+            right: { type: 'variable', name: 'root_id' },
+        });
+        expect(context.params).toEqual({ 'root_id': 1 });
 
         expect(sql).toEqual(`
 SELECT
@@ -90,13 +159,9 @@ WHERE
     });
 
     it('many to one query', () => {
-        const entities = EntityConverter.fromModels(bagEntities);
+        const entities = EntityConverter.fromModels('mssql', bagEntities);
 
         const context = FindQueryBuilder.build(entities, entities[0], {
-            select: {
-                id: true,
-                name: true,
-            },
             include: {
                 profile: {
                     bio: true,
@@ -107,48 +172,34 @@ WHERE
         const sql = context.toSql();
 
         expect(context).toBeInstanceOf(FindContextQueryBuilder);
-
-        expect(context).toEqual<FindContextQueryBuilder>(Object.assign(new FindContextQueryBuilder(), {
-            from: { table: 'User', as: 'root' },
-            columns: [
-                { source: 'root', name: 'id', as: 'id' },
-                { source: 'root', name: 'name', as: 'name' },
-                { source: 'profile', name: 'bio', as: 'profile.bio' },
-            ],
-            temporalColumns: [],
-            params: {},
-            children: [],
-            into: null,
-            joins: [
+        expect(context.columns).toHaveLength(1);
+        expect(context.columns[0]).toEqual({ source: 'profile', name: 'bio', as: 'profile.bio' });
+        expect(context.joins).toHaveLength(1);
+        expect(context.joins[0]).toEqual({
+            type: 'inner',
+            from: {
+                table: 'Profile',
+                as: 'profile',
+            },
+            conditions: [
                 {
-                    type: 'inner',
-                    from: {
-                        table: 'Profile',
-                        as: 'profile',
+                    left: {
+                        type: 'column',
+                        source: 'profile',
+                        column: 'userId',
                     },
-                    conditions: [
-                        {
-                            left: {
-                                type: 'column',
-                                source: 'profile',
-                                column: 'userId',
-                            },
-                            operator: '=',
-                            right: {
-                                type: 'column',
-                                source: 'root',
-                                column: 'id',
-                            },
-                        }
-                    ],
+                    operator: '=',
+                    right: {
+                        type: 'column',
+                        source: 'root',
+                        column: 'id',
+                    },
                 }
             ],
-        }));
+        });
 
         expect(sql).toEqual(`
 SELECT
-\t[root].[id] AS [id],
-\t[root].[name] AS [name],
 \t[profile].[bio] AS [profile.bio]
 FROM [User] AS [root] WITH(NOLOCK)
 INNER JOIN [Profile] AS [profile] WITH(NOLOCK) ON
@@ -157,7 +208,7 @@ INNER JOIN [Profile] AS [profile] WITH(NOLOCK) ON
     });
 
     it('one to many query', () => {
-        const entities = EntityConverter.fromModels(bagEntities);
+        const entities = EntityConverter.fromModels('mssql', bagEntities);
 
         const context = FindQueryBuilder.build(entities, entities[0], {
             select: {
@@ -223,7 +274,7 @@ INNER JOIN [#main] AS [parent] WITH(NOLOCK) ON
     });
 
     it('many to many query', () => {
-        const entities = EntityConverter.fromModels(bagEntities);
+        const entities = EntityConverter.fromModels('mssql', bagEntities);
 
         const context = FindQueryBuilder.build(entities, entities[0], {
             select: {

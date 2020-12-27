@@ -9,7 +9,7 @@ import { AdurcFindManyArgs } from '@adurc/core/dist/interfaces/client/find-many.
 describe('recordset converter tests', () => {
     it('simple recordset converter', () => {
         const models: AdurcModel[] = [SimpleAdurcModel];
-        const entities = EntityConverter.fromModels(models);
+        const entities = EntityConverter.fromModels('mssql', models);
 
         const args: AdurcFindManyArgs = {
             select: {
@@ -35,7 +35,7 @@ describe('recordset converter tests', () => {
     });
 
     it('recordset converter with join', () => {
-        const entities = EntityConverter.fromModels(bagEntities);
+        const entities = EntityConverter.fromModels('mssql', bagEntities);
         const userEntity = entities.find(x => x.info.name === 'User');
 
         const args: AdurcFindManyArgs = {
@@ -67,7 +67,7 @@ describe('recordset converter tests', () => {
     });
 
     it('recordset converter with one to many', () => {
-        const entities = EntityConverter.fromModels(bagEntities);
+        const entities = EntityConverter.fromModels('mssql', bagEntities);
         const userEntity = entities.find(x => x.info.name === 'User');
 
         const args: AdurcFindManyArgs = {
@@ -110,7 +110,7 @@ describe('recordset converter tests', () => {
     });
 
     it('recordset converter with many to many', () => {
-        const entities = EntityConverter.fromModels(bagEntities);
+        const entities = EntityConverter.fromModels('mssql', bagEntities);
         const userEntity = entities.find(x => x.info.name === 'User');
 
         const args: AdurcFindManyArgs = {

@@ -26,13 +26,13 @@ export class EntityConverter {
         }
     }
 
-    public static fromModels(models: AdurcModel[]): MSSQLEntity[] {
+    public static fromModels(source: string, models: AdurcModel[]): MSSQLEntity[] {
 
         const entities: MSSQLEntity[] = [];
 
         // 1- convert models into entities
         for (const model of models) {
-            if (model.source !== 'mssql') {
+            if (model.source !== source) {
                 continue;
             }
 
@@ -109,7 +109,7 @@ export class EntityConverter {
                     }
 
                     const inverseEntity = entities.find(x => x.info === inverseModel);
-                    
+
                     const relation = relations[0];
                     if (relation.name === 'manyToMany') {
                         entity.relations.push({

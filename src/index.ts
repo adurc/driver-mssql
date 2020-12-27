@@ -31,8 +31,15 @@ export class SqlServerDriver implements AdurcDriver {
     }
 
     async findMany(model: AdurcModel, args: AdurcFindManyArgs): Promise<unknown[]> {
+        console.log('[driver-mssql] findMany model: ' + model.name);
         const entity = this.entities.find(x => x.info.name === model.name);
+        if (!entity) {
+            throw new Error(`[driver-mssq] Entity linked to model ${model.name} not found`);
+        }
         const context = FindQueryBuilder.build(this.entities, entity, args);
+
+        console.log('[driver-mssql] context: ' + JSON.stringify(context));
+
         const sql = context.toSql();
 
         const request = this.pool.request();
@@ -79,7 +86,12 @@ export class SqlServerDriver implements AdurcDriver {
 
             yield BuilderStage.OnInit;
 
-            const entities = EntityConverter.fromModels(context.models);
+            console.log(`[driver-mssql] models found: ${context.models.length}`);
+
+            const entities = EntityConverter.fromModels(name, context.models);
+
+            console.log(`[driver-mssql] entities registered: ${entities.length}`);
+
             driver.setEntities(entities);
 
             await pool.connect();

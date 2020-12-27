@@ -1,6 +1,7 @@
 import { AdurcFindManyArgs } from '@adurc/core/dist/interfaces/client/find-many.args';
 import { AdurcModelInclude } from '@adurc/core/dist/interfaces/client/include';
 import { AdurcModelSelect } from '@adurc/core/dist/interfaces/client/select';
+import { AdurcModelOrderBy } from '@adurc/core/dist/interfaces/client/sort';
 import { AdurcModelWhere } from '@adurc/core/dist/interfaces/client/where';
 import { MSSQLEntity } from '../interfaces/mssql-entity';
 import { MSSQLRelationManyToMany, MSSQLRelationManyToOne, MSSQLRelationOneToMany } from '../interfaces/mssql-relation';
@@ -12,10 +13,13 @@ export class FindQueryBuilder {
         const context = new FindContextQueryBuilder();
 
         context.from = this.buildTableAccessor(entity.tableName, 'root', entity.schema, entity.database);
+        context.skip = args.skip;
+        context.take = args.take;
 
         this.buildSelect(args.select, entity, context);
-        this.buildWhere(args.where, entity, context);
-        this.buildInclude(args.include, entity, context);
+        args.where && this.buildWhere(args.where, entity, context);
+        args.orderBy && this.buildOrderBy(args.orderBy, entity, context);
+        args.include && this.buildInclude(args.include, entity, context);
 
         return context;
     }
@@ -30,6 +34,18 @@ export class FindQueryBuilder {
         if (schema) output.schema = schema;
 
         return output;
+    }
+
+    public static buildOrderBy(orderBy: AdurcModelOrderBy<unknown>, entity: MSSQLEntity, context: FindContextQueryBuilder): void {
+        for (const field in orderBy) {
+            const column = entity.columns.find(x => x.info.name === field);
+
+            context.orderBy.push({
+                source: 'root',
+                name: column.columnName,
+                direction: orderBy[field],
+            });
+        }
     }
 
     public static buildSelect(select: AdurcModelSelect<unknown>, entity: MSSQLEntity, context: FindContextQueryBuilder): void {
