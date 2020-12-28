@@ -5,7 +5,7 @@ import { AdurcModelOrderBy } from '@adurc/core/dist/interfaces/client/sort';
 import { AdurcModelWhere } from '@adurc/core/dist/interfaces/client/where';
 import { MSSQLEntity } from '../interfaces/mssql-entity';
 import { MSSQLRelationManyToMany, MSSQLRelationManyToOne, MSSQLRelationOneToMany } from '../interfaces/mssql-relation';
-import { FindContextQueryBuilder, IJoinQueryBuilder, ITableAccessor } from './context.query-builder';
+import { FindContextQueryBuilder, IJoinQueryBuilder, ITableAccessor } from './find.context';
 
 export class FindQueryBuilder {
 
@@ -43,7 +43,7 @@ export class FindQueryBuilder {
             context.orderBy.push({
                 source: 'root',
                 name: column.columnName,
-                direction: orderBy[field],
+                direction: orderBy[field] === 'desc' ? 'DESC' : 'ASC',
             });
         }
     }

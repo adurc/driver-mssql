@@ -1,8 +1,8 @@
 import { AdurcModel } from '@adurc/core/dist/interfaces/model';
 import { EntityConverter } from '../../entity.converter';
 import { SimpleAdurcModel } from '../mocks/simple-adurc-model';
-import { FindQueryBuilder } from '../../query-builders/find.query-builder';
-import { FindContextQueryBuilder, IColumnQueryBuilder, IConditionSide, ITableAccessor, OperatorType } from '../../query-builders/context.query-builder';
+import { FindQueryBuilder } from '../../query-builders/find.builder';
+import { FindContextQueryBuilder, IColumnQueryBuilder, IConditionSide, ITableAccessor, OperatorType } from '../../query-builders/find.context';
 import { bagEntities } from '../mocks/bag-entities';
 
 describe('query builder find tests', () => {
@@ -44,7 +44,7 @@ FROM [Fake] AS [root] WITH(NOLOCK)
                 name: true,
             },
             orderBy: {
-                name: 'ASC',
+                name: 'asc',
             }
         });
 
@@ -73,7 +73,7 @@ ORDER BY [root].[name] ASC
                 id: true,
             },
             orderBy: {
-                name: 'ASC',
+                name: 'asc',
             },
             skip: 100,
             take: 50,
@@ -105,7 +105,7 @@ FETCH NEXT 50 ROWS ONLY
                 id: true,
             },
             orderBy: {
-                name: 'ASC',
+                name: 'asc',
             },
             take: 50,
         });
@@ -135,7 +135,7 @@ ORDER BY [root].[name] ASC
             },
             where: {
                 id: 1,
-            } as unknown // TODO: pending to fix in core, when model is uknown, i cant pass filter
+            }
         });
 
         const sql = context.toSql();

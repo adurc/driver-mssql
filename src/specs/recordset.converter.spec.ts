@@ -27,7 +27,7 @@ describe('recordset converter tests', () => {
             ],
         };
 
-        const converted = RecordsetConverter.convertResult(entities[0], args, result);
+        const converted = RecordsetConverter.convertFindMany(entities[0], args, result);
 
         expect(converted).toEqual([
             { id: 1, name: 'fake' },
@@ -59,7 +59,7 @@ describe('recordset converter tests', () => {
             ],
         };
 
-        const converted = RecordsetConverter.convertResult(userEntity, args, result);
+        const converted = RecordsetConverter.convertFindMany(userEntity, args, result);
 
         expect(converted).toEqual([
             { id: 1, name: 'fake', profile: { bio: 'test' } },
@@ -101,7 +101,7 @@ describe('recordset converter tests', () => {
             ],
         };
 
-        const converted = RecordsetConverter.convertResult(userEntity, args, result);
+        const converted = RecordsetConverter.convertFindMany(userEntity, args, result);
 
         expect(converted).toEqual([
             { id: 1, name: 'fake 1', posts: [{ id: 1, title: 'post title from fake 1' }] },
@@ -144,7 +144,7 @@ describe('recordset converter tests', () => {
             ],
         };
 
-        const converted = RecordsetConverter.convertResult(userEntity, args, result);
+        const converted = RecordsetConverter.convertFindMany(userEntity, args, result);
 
         expect(converted).toEqual([
             { id: 1, name: 'fake 1', agencies: [{ id: 1, name: 'Agency 1' }] },

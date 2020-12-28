@@ -1,10 +1,17 @@
+import { BatchResult } from '@adurc/core/dist/interfaces/client/batch.result';
+import { AdurcCreateArgs } from '@adurc/core/dist/interfaces/client/create.args';
 import { AdurcFindManyArgs } from '@adurc/core/dist/interfaces/client/find-many.args';
+import { AdurcModelUntyped } from '@adurc/core/dist/interfaces/client/model';
+import { AdurcModelSelectUntyped } from '@adurc/core/dist/interfaces/client/select';
 import mssql from 'mssql';
 import { MSSQLEntity } from './interfaces/mssql-entity';
 
 export class RecordsetConverter {
+    static convertCreateMany(_entity: MSSQLEntity, _args: AdurcCreateArgs<unknown, never>, _result: mssql.IResult<Record<string, unknown>>): BatchResult {
+        throw new Error('Method not implemented.');
+    }
 
-    static convertResult(entity: MSSQLEntity, args: AdurcFindManyArgs, result: mssql.IResult<Record<string, unknown>>): unknown[] {
+    static convertFindMany(entity: MSSQLEntity, args: AdurcFindManyArgs, result: mssql.IResult<Record<string, unknown>>): AdurcModelUntyped[] {
         return this.convertEntityRecordset(entity, args, result, 0);
     }
 
@@ -15,8 +22,8 @@ export class RecordsetConverter {
         result: mssql.IResult<Record<string, unknown>>,
         recordsetOffset: number,
         parentRecordPk?: Record<string, unknown>,
-    ): unknown[] {
-        const output: unknown[] = [];
+    ): AdurcModelUntyped[] {
+        const output: AdurcModelUntyped[] = [];
         const recordset = result.recordsets[recordsetOffset];
 
         for (const row of recordset) {
@@ -53,13 +60,21 @@ export class RecordsetConverter {
             const relation = entity.relations.find(x => x.info.name === include);
             const value = args.include[include];
             if (relation.type === 'manyToOne') {
-                item[include] = this.convertEntityRecordsetRowSelect(row, value, relation.info.name + '.');
+                if (typeof value === 'object') {
+                    item[include] = this.convertEntityRecordsetRowSelect(row, value as AdurcModelSelectUntyped, relation.info.name + '.');
+                } else {
+                    throw new Error('Pending implement projection for all object when value is true');
+                }
             } else if (relation.type === 'oneToMany' || relation.type === 'manyToMany') {
                 const pkRecord: Record<string, unknown> = {};
-                for (const pk of entity.columns.filter(x => x.primary)) {
+                for (const pk of entity.columns.filter(x => x.options.primary)) {
                     pkRecord[pk.info.name] = row['__' + pk.info.name];
                 }
-                item[include] = this.convertEntityRecordset(relation.joinEntity, value, result, recordsetOffset + 1, pkRecord);
+                if (typeof value === 'object') {
+                    item[include] = this.convertEntityRecordset(relation.joinEntity, value, result, recordsetOffset + 1, pkRecord);
+                } else {
+                    throw new Error('Pending implement projection for all object when value is true');
+                }
             }
         }
 

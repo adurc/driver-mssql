@@ -2,25 +2,26 @@ import { AdurcFieldReference, AdurcModel } from '@adurc/core/dist/interfaces/mod
 import { AdurcPrimitiveDefinition } from '@adurc/core/dist/interfaces/common';
 import { MSSQLEntity } from './interfaces/mssql-entity';
 import { MSSQLColumn } from './interfaces/mssql-column';
+import sql, { ISqlType } from 'mssql';
 
 export class EntityConverter {
 
-    public static getColumnTypeFromAdurcType(adurcType: AdurcPrimitiveDefinition): string {
+    public static getColumnTypeFromAdurcType(adurcType: AdurcPrimitiveDefinition): ISqlType {
         switch (adurcType) {
             case 'boolean':
-                return 'bit';
+                return sql.Bit();
             case 'buffer':
-                return 'varbinary';
+                return sql.VarBinary();
             case 'date':
-                return 'datetime';
+                return sql.DateTime();
             case 'float':
-                return 'decimal';
+                return sql.Decimal(18, 2);
             case 'int':
-                return 'int';
+                return sql.Int();
             case 'string':
-                return 'varchar';
+                return sql.VarChar();
             case 'uuid':
-                return 'uniqueidentifier';
+                return sql.UniqueIdentifier();
             default:
                 throw new Error(`Adurc primitive type "${adurcType}" not implemented`);
         }
@@ -66,24 +67,28 @@ export class EntityConverter {
                     const column: MSSQLColumn = {
                         info: field,
                         columnName: field.name,
-                        columnType: this.getColumnTypeFromAdurcType(field.type),
-                        computed: false,
-                        identity: false,
-                        primary: false,
+                        options: {
+                            nullable: !field.nonNull,
+                        },
+                        sqlType: this.getColumnTypeFromAdurcType(field.type),
                     };
 
                     if (columnDirective) {
-                        const { name, type, computed, identity, primary } = columnDirective.args;
+                        const { name, type, readOnly, identity, primary } = columnDirective.args;
 
-                        column.primary = primary === true;
-                        column.computed = computed === true;
-                        column.identity = identity == true;
+                        column.options.primary = primary === true;
+                        column.options.readOnly = readOnly === true;
+                        column.options.identity = identity == true;
 
                         if (name) {
                             column.columnName = name as string;
                         }
                         if (type) {
-                            column.columnType = type as string;
+                            const factory = sql.TYPES[type as string];
+                            if (!factory) {
+                                throw new Error(`Provided column type ${type} is not valid`);
+                            }
+                            column.sqlType = factory();
                         }
                     }
 

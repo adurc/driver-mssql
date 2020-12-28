@@ -15,8 +15,10 @@ import { manyToOneDirective } from './directives/many-to-one.directive';
 import { EntityConverter } from './entity.converter';
 import { MSSQLEntity } from './interfaces/mssql-entity';
 import { AdurcModel } from '@adurc/core/dist/interfaces/model';
-import { FindQueryBuilder } from './query-builders/find.query-builder';
+import { FindQueryBuilder } from './query-builders/find.builder';
 import { RecordsetConverter } from './recordset.converter';
+import { CreateQueryBuilder } from './query-builders/create.builder';
+import { AdurcModelUntyped } from '@adurc/core/dist/interfaces/client/model';
 
 export class SqlServerDriver implements AdurcDriver {
     private readonly pool: mssql.ConnectionPool;
@@ -26,12 +28,29 @@ export class SqlServerDriver implements AdurcDriver {
         this.pool = options.pool;
     }
 
-    createMany(_model: AdurcModel, _args: AdurcCreateArgs): Promise<BatchResult<unknown>> {
-        throw new Error('Method not implemented.');
+    async createMany(model: AdurcModel, args: AdurcCreateArgs): Promise<BatchResult> {
+        console.log('[driver-mssql] createMany model: ' + model.name + ', args: ' + JSON.stringify(args));
+
+        const entity = this.entities.find(x => x.info.name === model.name);
+        if (!entity) {
+            throw new Error(`[driver-mssq] Entity linked to model ${model.name} not found`);
+        }
+
+        const context = CreateQueryBuilder.build(this.entities, entity, args);
+
+        console.log('[driver-mssql] context: ' + JSON.stringify(context));
+
+        const sql = context.toSql();
+
+        const request = this.pool.request();
+
+        const result = await request.query(sql);
+
+        return RecordsetConverter.convertCreateMany(entity, args, result);
     }
 
-    async findMany(model: AdurcModel, args: AdurcFindManyArgs): Promise<unknown[]> {
-        console.log('[driver-mssql] findMany model: ' + model.name);
+    async findMany(model: AdurcModel, args: AdurcFindManyArgs): Promise<AdurcModelUntyped[]> {
+        console.log('[driver-mssql] findMany model: ' + model.name + ', args: ' + JSON.stringify(args));
         const entity = this.entities.find(x => x.info.name === model.name);
         if (!entity) {
             throw new Error(`[driver-mssq] Entity linked to model ${model.name} not found`);
@@ -50,14 +69,14 @@ export class SqlServerDriver implements AdurcDriver {
 
         const result = await request.query(sql);
 
-        return RecordsetConverter.convertResult(entity, args, result);
+        return RecordsetConverter.convertFindMany(entity, args, result);
     }
 
-    updateMany(_model: AdurcModel, _args: AdurcUpdateArgs): Promise<BatchResult<unknown>> {
+    updateMany(_model: AdurcModel, _args: AdurcUpdateArgs): Promise<BatchResult> {
         throw new Error('Method not implemented.');
     }
 
-    deleteMany(_model: AdurcModel, _args: AdurcDeleteArgs): Promise<BatchResult<unknown>> {
+    deleteMany(_model: AdurcModel, _args: AdurcDeleteArgs): Promise<BatchResult> {
         throw new Error('Method not implemented.');
     }
 

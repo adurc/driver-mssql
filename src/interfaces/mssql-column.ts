@@ -1,10 +1,9 @@
 import { AdurcField } from '@adurc/core/dist/interfaces/model';
+import { ISqlType, IColumnOptions } from 'mssql';
 
 export interface MSSQLColumn {
     info: AdurcField;
     columnName: string;
-    columnType: string;
-    primary: boolean;
-    identity: boolean;
-    computed: boolean;
+    sqlType: ISqlType;
+    options: IColumnOptions;
 }

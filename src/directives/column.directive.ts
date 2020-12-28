@@ -7,7 +7,7 @@ export const columnDirective: AdurcDirectiveDefinition = {
     args: {
         primary: { type: 'boolean' },
         identity: { type: 'boolean' },
-        computed: { type: 'boolean' },
+        readOnly: { type: 'boolean' },
         name: { type: 'string' },
         type: {
             type: 'enum',

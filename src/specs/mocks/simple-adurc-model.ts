@@ -1,5 +1,6 @@
 import { AdurcModel } from '@adurc/core/dist/interfaces/model';
 import { MSSQLEntity } from '../../interfaces/mssql-entity';
+import sql from 'mssql';
 
 export const SimpleAdurcModel: AdurcModel = {
     source: 'mssql',
@@ -28,17 +29,20 @@ export const SimpleMSSQLEntity: MSSQLEntity = {
     relations: [],
     columns: [{
         columnName: 'id',
-        columnType: 'int',
-        computed: false,
-        identity: false,
-        primary: true,
+        sqlType: sql.Int(),
+        options: {
+            primary: true,
+            identity: false,
+            nullable: false,
+            readOnly: false,
+        },
         info: SimpleAdurcModel.fields[0],
     }, {
         columnName: 'name',
-        columnType: 'varchar',
-        computed: false,
-        identity: false,
-        primary: false,
+        sqlType: sql.VarChar(),
+        options: {
+            nullable: false,
+        },
         info: SimpleAdurcModel.fields[1],
     }],
     tableName: 'Fake',
