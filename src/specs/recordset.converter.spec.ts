@@ -174,7 +174,7 @@ describe('recordset converter tests', () => {
                 recordsets: [],
             };
 
-            const converted = RecordsetConverter.convertCreateMany(entities[0], args, result);
+            const converted = RecordsetConverter.convertMutationMany(entities[0], args, result);
 
             expect(converted.count).toEqual(1);
             expect(converted.returning).toBeUndefined();
@@ -204,7 +204,7 @@ describe('recordset converter tests', () => {
                 ],
             };
 
-            const converted = RecordsetConverter.convertCreateMany(entities[0], args, result);
+            const converted = RecordsetConverter.convertMutationMany(entities[0], args, result);
 
             expect(converted.count).toEqual(1);
             expect(converted.returning).toBeDefined();

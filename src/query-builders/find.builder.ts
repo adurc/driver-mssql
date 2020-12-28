@@ -5,7 +5,7 @@ import { AdurcModelOrderBy } from '@adurc/core/dist/interfaces/client/sort';
 import { AdurcModelWhere } from '@adurc/core/dist/interfaces/client/where';
 import { MSSQLEntity } from '../interfaces/mssql-entity';
 import { MSSQLRelationManyToMany, MSSQLRelationManyToOne, MSSQLRelationOneToMany } from '../interfaces/mssql-relation';
-import { FindContextQueryBuilder, IAliasAccessor, IJoinQueryBuilder, ITableAccessor } from './find.context';
+import { FindContextQueryBuilder, IAliasAccessor, IJoinQueryBuilder, ITableAccessor, IWherableQueryBuilder } from './find.context';
 
 export class FindQueryBuilder {
 
@@ -17,7 +17,7 @@ export class FindQueryBuilder {
         context.take = args.take;
 
         this.buildSelect(args.select, entity, context);
-        args.where && this.buildWhere(args.where, entity, context);
+        args.where && this.buildWhere(args.where, entity, context, 'root');
         args.orderBy && this.buildOrderBy(args.orderBy, entity, context);
         args.include && this.buildInclude(args.include, entity, context);
 
@@ -65,7 +65,9 @@ export class FindQueryBuilder {
         }
     }
 
-    public static buildWhere(where: AdurcModelWhere<unknown>, entity: MSSQLEntity, context: FindContextQueryBuilder): void {
+    public static buildWhere(where: AdurcModelWhere<unknown>, entity: MSSQLEntity, context: IWherableQueryBuilder, source?: string): void {
+        const sourcePreffix = source ? `${source}_` : '';
+
         for (const field in where) {
             if (field === '_AND' || field === '_OR') {
                 // TODO: Pending implement subtree conditions _AND and _OR
@@ -74,12 +76,12 @@ export class FindQueryBuilder {
 
             const column = entity.columns.find(x => x.info.name === field);
             if (column) {
-                context.params[`root_${field}`] = where[field];
+                context.params[`${sourcePreffix}${field}`] = where[field];
 
                 context.where.push({
-                    left: { type: 'column', source: 'root', column: column.columnName },
+                    left: { type: 'column', source, column: column.columnName },
                     operator: '=',
-                    right: { type: 'variable', name: `root_${field}` }
+                    right: { type: 'variable', name: `${sourcePreffix}${field}` }
                 });
             } else {
                 const relation = entity.relations.find(x => x.info.name === field);

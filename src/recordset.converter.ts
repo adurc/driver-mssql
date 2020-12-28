@@ -1,13 +1,13 @@
 import { BatchResult } from '@adurc/core/dist/interfaces/client/batch.result';
-import { AdurcCreateArgs } from '@adurc/core/dist/interfaces/client/create.args';
 import { AdurcFindManyArgs } from '@adurc/core/dist/interfaces/client/find-many.args';
+import { AdurcModelInclude } from '@adurc/core/dist/interfaces/client/include';
 import { AdurcModelUntyped } from '@adurc/core/dist/interfaces/client/model';
-import { AdurcModelSelectUntyped } from '@adurc/core/dist/interfaces/client/select';
+import { AdurcModelSelect, AdurcModelSelectUntyped } from '@adurc/core/dist/interfaces/client/select';
 import mssql from 'mssql';
 import { MSSQLEntity } from './interfaces/mssql-entity';
 
 export class RecordsetConverter {
-    static convertCreateMany(entity: MSSQLEntity, args: AdurcCreateArgs, result: mssql.IResult<Record<string, unknown>>): BatchResult {
+    static convertMutationMany(entity: MSSQLEntity, args: { select?: AdurcModelSelect<AdurcModelUntyped>, include?: AdurcModelInclude<AdurcModelUntyped> }, result: mssql.IResult<Record<string, unknown>>): BatchResult {
         const output: BatchResult = {
             count: result.rowsAffected.reduce((a, b) => a + b, 0),
         };

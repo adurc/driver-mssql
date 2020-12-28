@@ -5,7 +5,7 @@ import { BatchResult } from '@adurc/core/dist/interfaces/client/batch.result';
 import { AdurcCreateArgs } from '@adurc/core/dist/interfaces/client/create.args';
 import { AdurcDeleteArgs } from '@adurc/core/dist/interfaces/client/delete.args';
 import { AdurcFindManyArgs } from '@adurc/core/dist/interfaces/client/find-many.args';
-import { AdurcUpdateArgs } from '@adurc/core/dist/interfaces/client/update';
+import { AdurcUpdateArgs } from '@adurc/core/dist/interfaces/client/update.args';
 import { BuilderGeneratorFunction, BuilderStage } from '@adurc/core/dist/interfaces/builder.generator';
 import { entityDirective } from './directives/entity.directive';
 import { columnDirective } from './directives/column.directive';
@@ -19,6 +19,7 @@ import { FindQueryBuilder } from './query-builders/find.builder';
 import { RecordsetConverter } from './recordset.converter';
 import { CreateQueryBuilder } from './query-builders/create.builder';
 import { AdurcModelUntyped } from '@adurc/core/dist/interfaces/client/model';
+import { UpdateQueryBuilder } from './query-builders/update.builder';
 
 export class SqlServerDriver implements AdurcDriver {
     private readonly pool: mssql.ConnectionPool;
@@ -46,7 +47,7 @@ export class SqlServerDriver implements AdurcDriver {
 
         const result = await request.query(sql);
 
-        return RecordsetConverter.convertCreateMany(entity, args, result);
+        return RecordsetConverter.convertMutationMany(entity, args, result);
     }
 
     async findMany(model: AdurcModel, args: AdurcFindManyArgs): Promise<AdurcModelUntyped[]> {
@@ -72,8 +73,25 @@ export class SqlServerDriver implements AdurcDriver {
         return RecordsetConverter.convertFindMany(entity, args, result);
     }
 
-    updateMany(_model: AdurcModel, _args: AdurcUpdateArgs): Promise<BatchResult> {
-        throw new Error('Method not implemented.');
+    async updateMany(model: AdurcModel, args: AdurcUpdateArgs): Promise<BatchResult> {
+        console.log('[driver-mssql] updateMany model: ' + model.name + ', args: ' + JSON.stringify(args));
+
+        const entity = this.entities.find(x => x.info.name === model.name);
+        if (!entity) {
+            throw new Error(`[driver-mssq] Entity linked to model ${model.name} not found`);
+        }
+
+        const context = UpdateQueryBuilder.build(this.entities, entity, args);
+
+        console.log('[driver-mssql] context: ' + JSON.stringify(context));
+
+        const sql = context.toSql();
+
+        const request = this.pool.request();
+
+        const result = await request.query(sql);
+
+        return RecordsetConverter.convertMutationMany(entity, args, result);
     }
 
     deleteMany(_model: AdurcModel, _args: AdurcDeleteArgs): Promise<BatchResult> {

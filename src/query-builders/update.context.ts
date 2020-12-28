@@ -1,21 +1,25 @@
 import { MSSQLColumn } from '../interfaces/mssql-column';
 import { MSSQLEntity } from '../interfaces/mssql-entity';
-import { FindContextQueryBuilder } from './find.context';
+import { Condition, FindContextQueryBuilder, IConditionQueryBuilder, IConditionSide, IWherableQueryBuilder } from './find.context';
 import { IColumnOptions, ISqlType, TYPES } from 'mssql';
 
-export class CreateContextQueryBuilder {
+export class UpdateContextQueryBuilder implements IWherableQueryBuilder {
 
+    public params: Record<string, unknown>;
     public entity: MSSQLEntity;
     public pks: MSSQLColumn[];
     public rows: Record<string, unknown>[];
     public returning: FindContextQueryBuilder | null;
     public tempTable: string | null;
+    public where: Condition[];
 
     constructor() {
         this.pks = [];
         this.rows = [];
+        this.where = [];
         this.returning = null;
         this.tempTable = null;
+        this.params = {};
     }
 
     public toSql(): string {
@@ -38,13 +42,22 @@ export class CreateContextQueryBuilder {
 
         for (const row of this.rows) {
             const columns = Object.getOwnPropertyNames(row);
-            const columnsSql = columns.map(x => `[${x}]`).join(',');
-            const valuesSql = columns.map(x => this.toSqlValue(row[x])).join(',');
-            chunks.push(`INSERT INTO ${tempFrom} (${columnsSql})`);
+            chunks.push(`UPDATE ${tempFrom} SET`);
+            chunks.push(columns.map(x => `\t[${x}] = ${this.toSqlValue(row[x])}`).join(',\n'));
             if (this.tempTable) {
                 chunks.push(`OUTPUT ${outputColumns} INTO ${this.tempTable}`);
             }
-            chunks.push(`VALUES (${valuesSql})`);
+            if (this.where.length > 0) {
+                chunks.push('WHERE');
+                for (const condition of this.where) {
+                    if ('ands' in condition || 'ors' in condition) {
+                        // TODO: Pending implement subtree conditions
+                        throw new Error('Not implemented subtree conditions');
+                    } else if ('left' in condition) {
+                        chunks.push(`\t${this.toSqlCondition(condition)}`);
+                    }
+                }
+            }
         }
 
         if (this.returning) {
@@ -62,6 +75,31 @@ export class CreateContextQueryBuilder {
         } else if (value instanceof Date) {
             return `'${value.toISOString()}'`;
         }
+    }
+
+    private toSqlConditionSide(condition: IConditionSide | number | string): string {
+        if (typeof condition === 'number') {
+            return condition.toString();
+        } else if (typeof condition === 'string') {
+            return condition.replace('\'', '\'\'');
+        } else if (condition.type === 'column') {
+            let output = '';
+
+            if (condition.source) {
+                output = `[${condition.source}].`;
+            }
+            output += `[${condition.column}]`;
+
+            return output;
+        } else if (condition.type === 'variable') {
+            return `@${condition.name}`;
+        }
+    }
+
+    private toSqlCondition(condition: IConditionQueryBuilder): string {
+        const left = this.toSqlConditionSide(condition.left);
+        const right = this.toSqlConditionSide(condition.right);
+        return `${left} ${condition.operator} ${right}`;
     }
 
     private toSqlDeclare(sqlType: ISqlType, options: IColumnOptions) {

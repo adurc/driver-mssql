@@ -55,7 +55,12 @@ export type TableColumnAccessor = { source: string, name: string };
 
 export type TableColumnOrder = TableColumnAccessor & { direction: 'ASC' | 'DESC' };
 
-export class FindContextQueryBuilder {
+export interface IWherableQueryBuilder {
+    where: Condition[];
+    params: Record<string, unknown>;
+}
+
+export class FindContextQueryBuilder implements IWherableQueryBuilder {
     public params: Record<string, unknown>;
     public columns: IColumnQueryBuilder[];
     public temporalColumns: IColumnQueryBuilder[];

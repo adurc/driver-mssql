@@ -2,7 +2,7 @@ import { AdurcModel } from '@adurc/core/dist/interfaces/model';
 import { EntityConverter } from '../../entity.converter';
 import { SimpleAdurcModel } from '../mocks/simple-adurc-model';
 import { FindQueryBuilder } from '../../query-builders/find.builder';
-import { FindContextQueryBuilder, IColumnQueryBuilder, IConditionSide, ITableAliasAccessor, OperatorType } from '../../query-builders/find.context';
+import { FindContextQueryBuilder, IColumnQueryBuilder, IConditionSide, ITableAliasAccessor, ITemporalTableAliasAccessor, OperatorType } from '../../query-builders/find.context';
 import { bagEntities } from '../mocks/bag-entities';
 
 describe('query builder find tests', () => {
@@ -21,7 +21,7 @@ describe('query builder find tests', () => {
 
         expect(context).toBeInstanceOf(FindContextQueryBuilder);
 
-        expect(context.from).toEqual({ table: 'Fake', as: 'root' });
+        expect(context.from).toEqual({ type: 'table', table: 'Fake', as: 'root' });
         expect(context.columns).toHaveLength(2);
         expect(context.columns[0]).toEqual({ source: 'root', name: 'id', as: 'id' });
         expect(context.columns[1]).toEqual({ source: 'root', name: 'name', as: 'name' });
@@ -178,6 +178,7 @@ WHERE
         expect(context.joins[0]).toEqual({
             type: 'inner',
             from: {
+                type: 'table',
                 table: 'Profile',
                 as: 'profile',
             },
@@ -245,7 +246,7 @@ INNER JOIN [Profile] AS [profile] WITH(NOLOCK) ON
         expect(context.children[0].temporalColumns).toHaveLength(0);
         expect(context.children[0].joins).toHaveLength(1);
         expect(context.children[0].joins[0].type).toEqual('inner');
-        expect(context.children[0].joins[0].from).toEqual<ITableAliasAccessor>({ type: 'table', table: '#main', as: 'parent' });
+        expect(context.children[0].joins[0].from).toEqual<ITemporalTableAliasAccessor>({ type: 'temporal-table', object: '#main', as: 'parent' });
         expect(context.children[0].joins[0].conditions).toHaveLength(1);
         expect(context.children[0].joins[0].conditions[0].left).toEqual<IConditionSide>({ type: 'column', source: 'parent', column: '__id' });
         expect(context.children[0].joins[0].conditions[0].operator).toEqual<OperatorType>('=');
@@ -269,7 +270,7 @@ FROM #main
 SELECT
 \t[root].[title] AS [title]
 FROM [Post] AS [root] WITH(NOLOCK)
-INNER JOIN [#main] AS [parent] WITH(NOLOCK) ON
+INNER JOIN #main AS [parent] ON
 \t[parent].[__id] = [root].[authorId]
 `.trim());
     });
