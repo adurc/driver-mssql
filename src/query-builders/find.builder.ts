@@ -5,7 +5,7 @@ import { AdurcModelOrderBy } from '@adurc/core/dist/interfaces/client/sort';
 import { AdurcModelWhere } from '@adurc/core/dist/interfaces/client/where';
 import { MSSQLEntity } from '../interfaces/mssql-entity';
 import { MSSQLRelationManyToMany, MSSQLRelationManyToOne, MSSQLRelationOneToMany } from '../interfaces/mssql-relation';
-import { FindContextQueryBuilder, IJoinQueryBuilder, ITableAccessor } from './find.context';
+import { FindContextQueryBuilder, IAliasAccessor, IJoinQueryBuilder, ITableAccessor } from './find.context';
 
 export class FindQueryBuilder {
 
@@ -24,8 +24,9 @@ export class FindQueryBuilder {
         return context;
     }
 
-    public static buildTableAccessor(table: string, as: string, schema?: string, database?: string,): ITableAccessor {
-        const output: ITableAccessor = {
+    public static buildTableAccessor(table: string, as: string, schema?: string, database?: string,): ITableAccessor & IAliasAccessor {
+        const output: ITableAccessor & IAliasAccessor = {
+            type: 'table',
             table,
             as,
         };
@@ -128,6 +129,7 @@ export class FindQueryBuilder {
 
         const relationContext = new FindContextQueryBuilder();
         relationContext.from = {
+            type: 'table',
             table: relation.manyTableName,
             as: 'many',
         };
@@ -135,6 +137,7 @@ export class FindQueryBuilder {
         relationContext.joins.push({
             type: 'inner',
             from: {
+                type: 'table',
                 table: '#main',
                 as: 'parent',
             },
@@ -187,6 +190,7 @@ export class FindQueryBuilder {
 
         const relationContext = new FindContextQueryBuilder();
         relationContext.from = {
+            type: 'table',
             table: relation.joinEntity.tableName,
             as: 'root',
         };
@@ -197,7 +201,8 @@ export class FindQueryBuilder {
         relationContext.joins.push({
             type: 'inner',
             from: {
-                table: '#main',
+                type: 'temporal-table',
+                object: '#main',
                 as: 'parent',
             },
             conditions: [
@@ -231,12 +236,19 @@ export class FindQueryBuilder {
     }
 
     public static buildManyToOne(relation: MSSQLRelationManyToOne, context: FindContextQueryBuilder, value: unknown): void {
+        const joinTable: ITableAccessor & IAliasAccessor = {
+            type: 'table',
+            table: relation.joinEntity.tableName,
+            as: relation.info.name,
+        };
+
+
+        if (relation.joinEntity.database) joinTable.database = relation.joinEntity.database;
+        if (relation.joinEntity.schema) joinTable.schema = relation.joinEntity.schema;
+
         const join: IJoinQueryBuilder = {
             type: relation.info.nonNull ? 'inner' : 'left',
-            from: {
-                table: relation.joinEntity.tableName,
-                as: relation.info.name,
-            },
+            from: joinTable,
             conditions: [
                 {
                     left: { type: 'column', source: relation.info.name, column: relation.inverseColumn },
@@ -245,9 +257,6 @@ export class FindQueryBuilder {
                 }
             ],
         };
-
-        if (relation.joinEntity.database) join.from.database = relation.joinEntity.database;
-        if (relation.joinEntity.schema) join.from.schema = relation.joinEntity.schema;
 
         context.joins.push(join);
 

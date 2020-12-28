@@ -4,12 +4,26 @@ export interface IColumnQueryBuilder {
     name: string;
 }
 
+export interface IAliasAccessor {
+    as: string;
+}
+
+
 export interface ITableAccessor {
+    type: 'table'
     database?: string;
     schema?: string;
     table: string;
-    as?: string;
 }
+
+export type ITableAliasAccessor = ITableAccessor & Partial<IAliasAccessor>;
+
+export interface ITemporalTableAccessor {
+    type: 'temporal-table'
+    object: string;
+}
+
+export type ITemporalTableAliasAccessor = ITemporalTableAccessor & IAliasAccessor;
 
 export type OperatorType = '=';
 
@@ -26,7 +40,7 @@ export type JoinType = 'left' | 'inner';
 
 export interface IJoinQueryBuilder {
     type: JoinType;
-    from: ITableAccessor;
+    from: ITableAliasAccessor | ITemporalTableAliasAccessor;
     conditions: IConditionQueryBuilder[];
 }
 
@@ -45,7 +59,7 @@ export class FindContextQueryBuilder {
     public params: Record<string, unknown>;
     public columns: IColumnQueryBuilder[];
     public temporalColumns: IColumnQueryBuilder[];
-    public from: ITableAccessor | null;
+    public from: ITableAliasAccessor;
     public joins: IJoinQueryBuilder[];
     public into: string | null;
     public where: Condition[];
@@ -102,7 +116,7 @@ export class FindContextQueryBuilder {
         chunks.push(`FROM ${this.toSqlTableAccessor(this.from)}`);
 
         for (const join of this.joins) {
-            chunks.push(`${join.type.toUpperCase()} JOIN ${this.toSqlTableAccessor(join.from)} ON`);
+            chunks.push(`${join.type.toUpperCase()} JOIN ${join.from.type === 'table' ? this.toSqlTableAccessor(join.from) : this.toSqlTemporalTableAccessor(join.from)} ON`);
             for (const condition of join.conditions) {
                 chunks.push(`\t${this.toSqlCondition(condition)}`);
             }
@@ -176,12 +190,18 @@ export class FindContextQueryBuilder {
         return `${left} ${condition.operator} ${right}`;
     }
 
-    private toSqlTableAccessor(table: ITableAccessor): string {
+    private toSqlTableAccessor(table: ITableAliasAccessor): string {
         let tempFrom = '';
         if (table.database) tempFrom += `[${table.database}].`;
         if (table.schema) tempFrom += `[${table.schema}].`;
         tempFrom += `[${table.table}]`;
-        if (table.as) tempFrom += ` AS [${table.as}] WITH(NOLOCK)`;
+        if ('as' in table) tempFrom += ` AS [${table.as}] WITH(NOLOCK)`;
+        return tempFrom;
+    }
+
+    private toSqlTemporalTableAccessor(table: ITemporalTableAliasAccessor): string {
+        let tempFrom = table.object;
+        if ('as' in table) tempFrom += ` AS [${table.as}]`;
         return tempFrom;
     }
 

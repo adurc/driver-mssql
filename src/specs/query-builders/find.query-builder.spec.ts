@@ -2,7 +2,7 @@ import { AdurcModel } from '@adurc/core/dist/interfaces/model';
 import { EntityConverter } from '../../entity.converter';
 import { SimpleAdurcModel } from '../mocks/simple-adurc-model';
 import { FindQueryBuilder } from '../../query-builders/find.builder';
-import { FindContextQueryBuilder, IColumnQueryBuilder, IConditionSide, ITableAccessor, OperatorType } from '../../query-builders/find.context';
+import { FindContextQueryBuilder, IColumnQueryBuilder, IConditionSide, ITableAliasAccessor, OperatorType } from '../../query-builders/find.context';
 import { bagEntities } from '../mocks/bag-entities';
 
 describe('query builder find tests', () => {
@@ -227,24 +227,25 @@ INNER JOIN [Profile] AS [profile] WITH(NOLOCK) ON
         const sql = context.toSql();
 
         expect(context).toBeInstanceOf(FindContextQueryBuilder);
-        expect(context.from).toEqual<ITableAccessor>({ table: 'User', as: 'root' });
+        expect(context.from).toEqual<ITableAliasAccessor>({ type: 'table', table: 'User', as: 'root' });
         expect(context.columns).toHaveLength(2);
         expect(context.columns[0]).toEqual<IColumnQueryBuilder>({ source: 'root', name: 'id', as: 'id' });
         expect(context.columns[1]).toEqual<IColumnQueryBuilder>({ source: 'root', name: 'name', as: 'name' });
         expect(context.params).toEqual<Record<string, unknown>>({});
         expect(context.joins).toHaveLength(0);
+        expect(context.into).toEqual('#main');
         expect(context.temporalColumns).toHaveLength(1);
         expect(context.temporalColumns[0]).toEqual<IColumnQueryBuilder>({ source: 'root', name: 'id', as: '__id' });
         expect(context.children).toHaveLength(1);
 
-        expect(context.children[0].from).toEqual<ITableAccessor>({ table: 'Post', as: 'root' });
+        expect(context.children[0].from).toEqual<ITableAliasAccessor>({ type: 'table', table: 'Post', as: 'root' });
         expect(context.children[0].columns).toHaveLength(1);
         expect(context.children[0].columns[0]).toEqual<IColumnQueryBuilder>({ source: 'root', name: 'title', as: 'title' });
         expect(context.children[0].params).toEqual<Record<string, unknown>>({});
         expect(context.children[0].temporalColumns).toHaveLength(0);
         expect(context.children[0].joins).toHaveLength(1);
         expect(context.children[0].joins[0].type).toEqual('inner');
-        expect(context.children[0].joins[0].from).toEqual<ITableAccessor>({ table: '#main', as: 'parent' });
+        expect(context.children[0].joins[0].from).toEqual<ITableAliasAccessor>({ type: 'table', table: '#main', as: 'parent' });
         expect(context.children[0].joins[0].conditions).toHaveLength(1);
         expect(context.children[0].joins[0].conditions[0].left).toEqual<IConditionSide>({ type: 'column', source: 'parent', column: '__id' });
         expect(context.children[0].joins[0].conditions[0].operator).toEqual<OperatorType>('=');
@@ -293,7 +294,7 @@ INNER JOIN [#main] AS [parent] WITH(NOLOCK) ON
         const sql = context.toSql();
 
         expect(context).toBeInstanceOf(FindContextQueryBuilder);
-        expect(context.from).toEqual<ITableAccessor>({ table: 'User', as: 'root' });
+        expect(context.from).toEqual<ITableAliasAccessor>({ type: 'table', table: 'User', as: 'root' });
         expect(context.columns).toHaveLength(2);
         expect(context.columns[0]).toEqual<IColumnQueryBuilder>({ source: 'root', name: 'id', as: 'id' });
         expect(context.columns[1]).toEqual<IColumnQueryBuilder>({ source: 'root', name: 'name', as: 'name' });
@@ -303,7 +304,7 @@ INNER JOIN [#main] AS [parent] WITH(NOLOCK) ON
         expect(context.temporalColumns[0]).toEqual<IColumnQueryBuilder>({ source: 'root', name: 'id', as: '__id' });
         expect(context.children).toHaveLength(1);
 
-        expect(context.children[0].from).toEqual<ITableAccessor>({ table: 'UserAgency', as: 'many' });
+        expect(context.children[0].from).toEqual<ITableAliasAccessor>({ type: 'table', table: 'UserAgency', as: 'many' });
         expect(context.children[0].columns).toHaveLength(1);
         expect(context.children[0].columns[0]).toEqual<IColumnQueryBuilder>({ source: 'root', name: 'name', as: 'name' });
         expect(context.children[0].params).toEqual<Record<string, unknown>>({});
@@ -311,14 +312,14 @@ INNER JOIN [#main] AS [parent] WITH(NOLOCK) ON
         expect(context.children[0].joins).toHaveLength(2);
 
         expect(context.children[0].joins[0].type).toEqual('inner');
-        expect(context.children[0].joins[0].from).toEqual<ITableAccessor>({ table: '#main', as: 'parent' });
+        expect(context.children[0].joins[0].from).toEqual<ITableAliasAccessor>({ type: 'table', table: '#main', as: 'parent' });
         expect(context.children[0].joins[0].conditions).toHaveLength(1);
         expect(context.children[0].joins[0].conditions[0].left).toEqual<IConditionSide>({ type: 'column', source: 'parent', column: '__id' });
         expect(context.children[0].joins[0].conditions[0].operator).toEqual<OperatorType>('=');
         expect(context.children[0].joins[0].conditions[0].right).toEqual<IConditionSide>({ type: 'column', source: 'many', column: 'userId' });
 
         expect(context.children[0].joins[1].type).toEqual('inner');
-        expect(context.children[0].joins[1].from).toEqual<ITableAccessor>({ table: 'Agency', as: 'root' });
+        expect(context.children[0].joins[1].from).toEqual<ITableAliasAccessor>({ type: 'table', table: 'Agency', as: 'root' });
         expect(context.children[0].joins[1].conditions).toHaveLength(1);
         expect(context.children[0].joins[1].conditions[0].left).toEqual<IConditionSide>({ type: 'column', source: 'root', column: 'id' });
         expect(context.children[0].joins[1].conditions[0].operator).toEqual<OperatorType>('=');

@@ -2,6 +2,7 @@ import { MSSQLColumn } from '../interfaces/mssql-column';
 import { MSSQLEntity } from '../interfaces/mssql-entity';
 import { FindContextQueryBuilder } from './find.context';
 import dataTypes from 'mssql/lib/datatypes';
+import { IColumnOptions, ISqlType, TYPES } from 'mssql';
 
 export class CreateContextQueryBuilder {
 
@@ -23,7 +24,8 @@ export class CreateContextQueryBuilder {
 
         if (this.tempTable) {
             chunks.push(`DECLARE @${this.tempTable} AS TABLE(`);
-            this.pks.map(x => `\t[${x.info.name}] ${dataTypes.declare(x.sqlType, x.options)}`).join(',\n');
+            this.pks.map(x => `\t[${x.info.name}] ${this.toSqlDeclare(x.sqlType, x.options)}`).
+                forEach(x => chunks.push(x));
             chunks.push(')');
             chunks.push('');
         }
@@ -41,7 +43,7 @@ export class CreateContextQueryBuilder {
             const valuesSql = columns.map(x => this.toSqlValue(row[x])).join(',');
             chunks.push(`INSERT INTO ${tempFrom} (${columnsSql})`);
             if (this.tempTable) {
-                chunks.push(`${outputColumns} INTO @${this.tempTable}`);
+                chunks.push(`${outputColumns} INTO ${this.tempTable}`);
             }
             chunks.push(`VALUES (${valuesSql})`);
         }
@@ -62,4 +64,31 @@ export class CreateContextQueryBuilder {
             return `'${value.toISOString()}'`;
         }
     }
+
+    private toSqlDeclare(sqlType: ISqlType, options: IColumnOptions) {
+        const type = sqlType.type as unknown as { declaration: string };
+        const opt: IColumnOptions & { precision: number, scale: number } = options as never;
+
+        switch (sqlType.type) {
+            case TYPES.VarChar:
+            case TYPES.VarBinary:
+                return `${type.declaration} (${opt.length > 8000 ? 'MAX' : (opt.length == null ? 'MAX' : opt.length)})`;
+            case TYPES.NVarChar:
+                return `${type.declaration} (${opt.length > 4000 ? 'MAX' : (opt.length == null ? 'MAX' : opt.length)})`;
+            case TYPES.Char:
+            case TYPES.NChar:
+            case TYPES.Binary:
+                return `${type.declaration} (${opt.length == null ? 1 : options.length})`;
+            case TYPES.Decimal:
+            case TYPES.Numeric:
+                return `${type.declaration} (${opt.precision == null ? 18 : opt.precision}, ${opt.scale == null ? 0 : opt.scale})`;
+            case TYPES.Time:
+            case TYPES.DateTime2:
+            case TYPES.DateTimeOffset:
+                return `${type.declaration} (${opt.scale == null ? 7 : opt.scale})`;
+            default:
+                return type.declaration;
+        }
+    }
+
 }
