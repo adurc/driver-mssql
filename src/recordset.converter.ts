@@ -7,8 +7,19 @@ import mssql from 'mssql';
 import { MSSQLEntity } from './interfaces/mssql-entity';
 
 export class RecordsetConverter {
-    static convertCreateMany(_entity: MSSQLEntity, _args: AdurcCreateArgs, _result: mssql.IResult<Record<string, unknown>>): BatchResult {
-        throw new Error('Method not implemented.');
+    static convertCreateMany(entity: MSSQLEntity, args: AdurcCreateArgs, result: mssql.IResult<Record<string, unknown>>): BatchResult {
+        const output: BatchResult = {
+            count: result.rowsAffected.reduce((a, b) => a + b, 0),
+        };
+
+        if ('include' in args || 'select' in args) {
+            output.returning = this.convertFindMany(entity, {
+                include: args.include,
+                select: args.select,
+            }, result);
+        }
+
+        return output;
     }
 
     static convertFindMany(entity: MSSQLEntity, args: AdurcFindManyArgs, result: mssql.IResult<Record<string, unknown>>): AdurcModelUntyped[] {
