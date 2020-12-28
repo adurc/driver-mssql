@@ -7,7 +7,7 @@ import mssql from 'mssql';
 import { MSSQLEntity } from './interfaces/mssql-entity';
 
 export class RecordsetConverter {
-    static convertCreateMany(_entity: MSSQLEntity, _args: AdurcCreateArgs<unknown, never>, _result: mssql.IResult<Record<string, unknown>>): BatchResult {
+    static convertCreateMany(_entity: MSSQLEntity, _args: AdurcCreateArgs, _result: mssql.IResult<Record<string, unknown>>): BatchResult {
         throw new Error('Method not implemented.');
     }
 
