@@ -1,3 +1,5 @@
+import { AdurcAggregateArgs } from '@adurc/core/dist/interfaces/client/aggregate.args';
+import { AggregateResult } from '@adurc/core/dist/interfaces/client/aggregate.result';
 import { BatchResult } from '@adurc/core/dist/interfaces/client/batch.result';
 import { AdurcFindManyArgs } from '@adurc/core/dist/interfaces/client/find-many.args';
 import { AdurcModelInclude } from '@adurc/core/dist/interfaces/client/include';
@@ -20,6 +22,10 @@ export class RecordsetConverter {
         }
 
         return output;
+    }
+
+    static convertAggregate(entity: MSSQLEntity, args: AdurcAggregateArgs, result: mssql.IResult<Record<string, unknown>>): AggregateResult {
+
     }
 
     static convertFindMany(entity: MSSQLEntity, args: AdurcFindManyArgs, result: mssql.IResult<Record<string, unknown>>): AdurcModelUntyped[] {

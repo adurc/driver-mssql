@@ -5,7 +5,7 @@ import { AdurcModelOrderBy } from '@adurc/core/dist/interfaces/client/sort';
 import { AdurcModelWhere } from '@adurc/core/dist/interfaces/client/where';
 import { MSSQLEntity } from '../interfaces/mssql-entity';
 import { MSSQLRelationManyToMany, MSSQLRelationManyToOne, MSSQLRelationOneToMany } from '../interfaces/mssql-relation';
-import { FindContextQueryBuilder, IAliasAccessor, IJoinQueryBuilder, ITableAccessor, IWherableQueryBuilder } from './find.context';
+import { FindContextQueryBuilder, IAliasAccessor, IJoinQueryBuilder, IOrderableQueryBuilder, ITableAccessor, IWherableQueryBuilder } from './find.context';
 
 export class FindQueryBuilder {
 
@@ -37,7 +37,7 @@ export class FindQueryBuilder {
         return output;
     }
 
-    public static buildOrderBy(orderBy: AdurcModelOrderBy<unknown>, entity: MSSQLEntity, context: FindContextQueryBuilder): void {
+    public static buildOrderBy(orderBy: AdurcModelOrderBy<unknown>, entity: MSSQLEntity, context: IOrderableQueryBuilder): void {
         for (const field in orderBy) {
             const column = entity.columns.find(x => x.info.name === field);
 
@@ -165,7 +165,7 @@ export class FindQueryBuilder {
         });
 
         for (const relationSelectField in value.select) {
-            if (value.select[relationSelectField] === false) {
+            if (value.select[relationSelectField] !== true) {
                 continue;
             }
 
@@ -221,7 +221,7 @@ export class FindQueryBuilder {
         }
 
         for (const relationSelectField in value.select) {
-            if (value.select[relationSelectField] === false) {
+            if (value.select[relationSelectField] !== true) {
                 continue;
             }
 

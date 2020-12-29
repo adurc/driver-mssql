@@ -21,6 +21,8 @@ import { CreateQueryBuilder } from './query-builders/create.builder';
 import { AdurcModelUntyped } from '@adurc/core/dist/interfaces/client/model';
 import { UpdateQueryBuilder } from './query-builders/update.builder';
 import { DeleteQueryBuilder } from './query-builders/delete.builder';
+import { AggregateResult } from '@adurc/core/dist/interfaces/client/aggregate.result';
+import { AggregateQueryBuilder } from './query-builders/aggregate.builder';
 
 export class SqlServerDriver implements AdurcDriver {
     private readonly pool: mssql.ConnectionPool;
@@ -116,8 +118,25 @@ export class SqlServerDriver implements AdurcDriver {
         return RecordsetConverter.convertMutationMany(entity, args, result);
     }
 
-    aggregate(_model: AdurcModel, _args: AdurcAggregateArgs): unknown {
-        throw new Error('Method not implemented.');
+    async aggregate(model: AdurcModel, args: AdurcAggregateArgs): Promise<AggregateResult> {
+        console.log('[driver-mssql] aggregate model: ' + model.name + ', args: ' + JSON.stringify(args));
+
+        const entity = this.entities.find(x => x.info.name === model.name);
+        if (!entity) {
+            throw new Error(`[driver-mssq] Entity linked to model ${model.name} not found`);
+        }
+
+        const context = AggregateQueryBuilder.build(this.entities, entity, args);
+
+        console.log('[driver-mssql] context: ' + JSON.stringify(context));
+
+        const sql = context.toSql();
+
+        const request = this.pool.request();
+
+        const result = await request.query(sql);
+
+        return RecordsetConverter.convertAggregate(entity, args, result);
     }
 
     private setEntities(entities: MSSQLEntity[]) {

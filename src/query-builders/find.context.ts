@@ -60,7 +60,16 @@ export interface IWherableQueryBuilder {
     params: Record<string, unknown>;
 }
 
-export class FindContextQueryBuilder implements IWherableQueryBuilder {
+export interface IOrderableQueryBuilder {
+    orderBy: TableColumnOrder[];
+}
+
+export interface IPaginationQueryBuilder {
+    skip?: number;
+    take?: number;
+}
+
+export class FindContextQueryBuilder implements IWherableQueryBuilder, IOrderableQueryBuilder, IPaginationQueryBuilder {
     public params: Record<string, unknown>;
     public columns: IColumnQueryBuilder[];
     public temporalColumns: IColumnQueryBuilder[];
