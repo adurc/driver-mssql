@@ -1,4 +1,3 @@
-import { MSSQLColumn } from '../interfaces/mssql-column';
 import { MSSQLEntity } from '../interfaces/mssql-entity';
 import { Condition, FindContextQueryBuilder, IConditionQueryBuilder, IConditionSide, IWherableQueryBuilder } from './find.context';
 import { IColumnOptions, ISqlType, TYPES } from 'mssql';
@@ -7,13 +6,11 @@ export class DeleteContextQueryBuilder implements IWherableQueryBuilder {
 
     public params: Record<string, unknown>;
     public entity: MSSQLEntity;
-    public pks: MSSQLColumn[];
     public returning: FindContextQueryBuilder | null;
     public tempTable: string | null;
     public where: Condition[];
 
     constructor() {
-        this.pks = [];
         this.where = [];
         this.returning = null;
         this.tempTable = null;
@@ -25,8 +22,8 @@ export class DeleteContextQueryBuilder implements IWherableQueryBuilder {
 
         if (this.tempTable) {
             chunks.push(`DECLARE ${this.tempTable} AS TABLE(`);
-            this.pks.map(x => `\t[${x.info.name}] ${this.toSqlDeclare(x.sqlType, x.options)}`).
-                forEach(x => chunks.push(x));
+            chunks.push(this.entity.columns.map(x => `\t[${x.info.name}] ${this.toSqlDeclare(x.sqlType, x.options)}`)
+                .join(',\n'));
             chunks.push(')');
             chunks.push('');
         }
@@ -36,7 +33,7 @@ export class DeleteContextQueryBuilder implements IWherableQueryBuilder {
         if (this.entity.schema) tempFrom += `[${this.entity.schema}].`;
         tempFrom += `[${this.entity.tableName}] WITH(ROWLOCK)`;
 
-        const outputColumns = this.tempTable ? this.pks.map(x => `INSERTED.[${x.columnName}]`).join(',') : null;
+        const outputColumns = this.tempTable ? this.entity.columns.map(x => `DELETED.[${x.columnName}]`).join(',') : null;
 
         chunks.push(`DELETE FROM ${tempFrom}`);
         if (this.tempTable) {
@@ -93,20 +90,20 @@ export class DeleteContextQueryBuilder implements IWherableQueryBuilder {
         switch (sqlType.type) {
             case TYPES.VarChar:
             case TYPES.VarBinary:
-                return `${type.declaration} (${opt.length > 8000 ? 'MAX' : (opt.length == null ? 'MAX' : opt.length)})`;
+                return `${type.declaration}(${opt.length > 8000 ? 'MAX' : (opt.length == null ? 'MAX' : opt.length)})`;
             case TYPES.NVarChar:
-                return `${type.declaration} (${opt.length > 4000 ? 'MAX' : (opt.length == null ? 'MAX' : opt.length)})`;
+                return `${type.declaration}(${opt.length > 4000 ? 'MAX' : (opt.length == null ? 'MAX' : opt.length)})`;
             case TYPES.Char:
             case TYPES.NChar:
             case TYPES.Binary:
-                return `${type.declaration} (${opt.length == null ? 1 : options.length})`;
+                return `${type.declaration}(${opt.length == null ? 1 : options.length})`;
             case TYPES.Decimal:
             case TYPES.Numeric:
-                return `${type.declaration} (${opt.precision == null ? 18 : opt.precision}, ${opt.scale == null ? 0 : opt.scale})`;
+                return `${type.declaration}(${opt.precision == null ? 18 : opt.precision}, ${opt.scale == null ? 0 : opt.scale})`;
             case TYPES.Time:
             case TYPES.DateTime2:
             case TYPES.DateTimeOffset:
-                return `${type.declaration} (${opt.scale == null ? 7 : opt.scale})`;
+                return `${type.declaration}(${opt.scale == null ? 7 : opt.scale})`;
             default:
                 return type.declaration;
         }

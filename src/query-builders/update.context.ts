@@ -8,14 +8,14 @@ export class UpdateContextQueryBuilder implements IWherableQueryBuilder {
     public params: Record<string, unknown>;
     public entity: MSSQLEntity;
     public pks: MSSQLColumn[];
-    public rows: Record<string, unknown>[];
+    public set: Record<string, unknown>;
     public returning: FindContextQueryBuilder | null;
     public tempTable: string | null;
     public where: Condition[];
 
     constructor() {
         this.pks = [];
-        this.rows = [];
+        this.set = {};
         this.where = [];
         this.returning = null;
         this.tempTable = null;
@@ -40,22 +40,20 @@ export class UpdateContextQueryBuilder implements IWherableQueryBuilder {
 
         const outputColumns = this.tempTable ? this.pks.map(x => `INSERTED.[${x.columnName}]`).join(',') : null;
 
-        for (const row of this.rows) {
-            const columns = Object.getOwnPropertyNames(row);
-            chunks.push(`UPDATE ${tempFrom} SET`);
-            chunks.push(columns.map(x => `\t[${x}] = ${this.toSqlValue(row[x])}`).join(',\n'));
-            if (this.tempTable) {
-                chunks.push(`OUTPUT ${outputColumns} INTO ${this.tempTable}`);
-            }
-            if (this.where.length > 0) {
-                chunks.push('WHERE');
-                for (const condition of this.where) {
-                    if ('ands' in condition || 'ors' in condition) {
-                        // TODO: Pending implement subtree conditions
-                        throw new Error('Not implemented subtree conditions');
-                    } else if ('left' in condition) {
-                        chunks.push(`\t${this.toSqlCondition(condition)}`);
-                    }
+        const columns = Object.getOwnPropertyNames(this.set);
+        chunks.push(`UPDATE ${tempFrom} SET`);
+        chunks.push(columns.map(x => `\t[${x}] = ${this.toSqlValue(this.set[x])}`).join(',\n'));
+        if (this.tempTable) {
+            chunks.push(`OUTPUT ${outputColumns} INTO ${this.tempTable}`);
+        }
+        if (this.where.length > 0) {
+            chunks.push('WHERE');
+            for (const condition of this.where) {
+                if ('ands' in condition || 'ors' in condition) {
+                    // TODO: Pending implement subtree conditions
+                    throw new Error('Not implemented subtree conditions');
+                } else if ('left' in condition) {
+                    chunks.push(`\t${this.toSqlCondition(condition)}`);
                 }
             }
         }

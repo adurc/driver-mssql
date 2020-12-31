@@ -25,7 +25,19 @@ export class RecordsetConverter {
     }
 
     static convertAggregate(entity: MSSQLEntity, args: AdurcAggregateArgs, result: mssql.IResult<Record<string, unknown>>): AggregateResult {
+        const output: AggregateResult = {};
 
+        const record = result.recordset[0];
+
+        if ('count' in args) {
+            output.count = record.count as number;
+        }
+
+        for (const arg in args) {
+            if (arg === 'count') continue;
+        }
+
+        return output;
     }
 
     static convertFindMany(entity: MSSQLEntity, args: AdurcFindManyArgs, result: mssql.IResult<Record<string, unknown>>): AdurcModelUntyped[] {

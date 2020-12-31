@@ -48,6 +48,12 @@ export class SqlServerDriver implements AdurcDriver {
 
         const request = this.pool.request();
 
+        if (context.returning) {
+            for (const param in context.returning.params) {
+                request.input(param, context.returning.params[param]);
+            }
+        }
+
         const result = await request.query(sql);
 
         return RecordsetConverter.convertMutationMany(entity, args, result);
@@ -92,6 +98,16 @@ export class SqlServerDriver implements AdurcDriver {
 
         const request = this.pool.request();
 
+        for (const param in context.params) {
+            request.input(param, context.params[param]);
+        }
+
+        if (context.returning) {
+            for (const param in context.returning.params) {
+                request.input(param, context.returning.params[param]);
+            }
+        }
+
         const result = await request.query(sql);
 
         return RecordsetConverter.convertMutationMany(entity, args, result);
@@ -102,7 +118,7 @@ export class SqlServerDriver implements AdurcDriver {
 
         const entity = this.entities.find(x => x.info.name === model.name);
         if (!entity) {
-            throw new Error(`[driver-mssq] Entity linked to model ${model.name} not found`);
+            throw new Error(`[driver-mssql] Entity linked to model ${model.name} not found`);
         }
 
         const context = DeleteQueryBuilder.build(this.entities, entity, args);
@@ -112,6 +128,10 @@ export class SqlServerDriver implements AdurcDriver {
         const sql = context.toSql();
 
         const request = this.pool.request();
+
+        for (const param in context.params) {
+            request.input(param, context.params[param]);
+        }
 
         const result = await request.query(sql);
 
@@ -133,6 +153,10 @@ export class SqlServerDriver implements AdurcDriver {
         const sql = context.toSql();
 
         const request = this.pool.request();
+
+        for (const param in context.params) {
+            request.input(param, context.params[param]);
+        }
 
         const result = await request.query(sql);
 

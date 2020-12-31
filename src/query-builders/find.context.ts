@@ -73,7 +73,7 @@ export class FindContextQueryBuilder implements IWherableQueryBuilder, IOrderabl
     public params: Record<string, unknown>;
     public columns: IColumnQueryBuilder[];
     public temporalColumns: IColumnQueryBuilder[];
-    public from: ITableAliasAccessor;
+    public from: ITableAliasAccessor | ITemporalTableAliasAccessor;
     public joins: IJoinQueryBuilder[];
     public into: string | null;
     public where: Condition[];
@@ -127,7 +127,7 @@ export class FindContextQueryBuilder implements IWherableQueryBuilder, IOrderabl
             chunks.push(`INTO ${this.into}`);
         }
 
-        chunks.push(`FROM ${this.toSqlTableAccessor(this.from)}`);
+        chunks.push(`FROM ${this.toSqlObjectAccessor(this.from)}`);
 
         for (const join of this.joins) {
             chunks.push(`${join.type.toUpperCase()} JOIN ${join.from.type === 'table' ? this.toSqlTableAccessor(join.from) : this.toSqlTemporalTableAccessor(join.from)} ON`);
@@ -202,6 +202,15 @@ export class FindContextQueryBuilder implements IWherableQueryBuilder, IOrderabl
         const left = this.toSqlConditionSide(condition.left);
         const right = this.toSqlConditionSide(condition.right);
         return `${left} ${condition.operator} ${right}`;
+    }
+
+    private toSqlObjectAccessor(obj: ITableAliasAccessor | ITemporalTableAliasAccessor): string {
+        switch (obj.type) {
+            case 'table':
+                return this.toSqlTableAccessor(obj);
+            case 'temporal-table':
+                return this.toSqlTemporalTableAccessor(obj);
+        }
     }
 
     private toSqlTableAccessor(table: ITableAliasAccessor): string {

@@ -13,9 +13,7 @@ describe('query builder update tests', () => {
             where: {
                 id: 1,
             },
-            data: [
-                { name: 'Loremp ipsum' }
-            ],
+            set: { name: 'Loremp ipsum' },
         });
 
         const sql = context.toSql();
@@ -28,8 +26,7 @@ describe('query builder update tests', () => {
         expect(context.params).toEqual({ id: 1 });
         expect(context.returning).toBeNull();
         expect(context.tempTable).toBeNull();
-        expect(context.rows).toHaveLength(1);
-        expect(context.rows[0]).toEqual({ name: 'Loremp ipsum' });
+        expect(context.set).toEqual({ name: 'Loremp ipsum' });
 
         expect(sql).toEqual(`
 UPDATE [Fake] WITH(ROWLOCK) SET
@@ -47,9 +44,7 @@ WHERE
             where: {
                 id: 1,
             },
-            data: [
-                { name: 'Loremp ipsum' }
-            ],
+            set: { name: 'Loremp ipsum' },
             select: {
                 id: true,
                 name: true,
@@ -66,8 +61,7 @@ WHERE
         expect(context.params).toEqual({ id: 1 });
         expect(context.returning).not.toBeNull();
         expect(context.tempTable).toEqual('@outputData');
-        expect(context.rows).toHaveLength(1);
-        expect(context.rows[0]).toEqual({ name: 'Loremp ipsum' });
+        expect(context.set).toEqual({ name: 'Loremp ipsum' });
 
         expect(sql).toEqual(`
 DECLARE @outputData AS TABLE(

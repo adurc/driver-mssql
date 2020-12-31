@@ -15,25 +15,19 @@ export class UpdateQueryBuilder {
         context.entity = entity;
         context.pks = entity.columns.filter(x => x.options.primary);
 
-        for (const object of args.data) {
-            const row: Record<string, unknown> = {};
-
-            for (const fieldName in object) {
-                const value = object[fieldName];
-                const column = entity.columns.find(x => x.info.name === fieldName);
-                if (column) {
-                    row[column.columnName] = value;
+        for (const fieldName in args.set) {
+            const value = args.set[fieldName];
+            const column = entity.columns.find(x => x.info.name === fieldName);
+            if (column) {
+                context.set[column.columnName] = value;
+            } else {
+                const relation = entity.relations.find(x => x.info.name === fieldName);
+                if (relation) {
+                    throw new Error('Pending implementation create relations');
                 } else {
-                    const relation = entity.relations.find(x => x.info.name === fieldName);
-                    if (relation) {
-                        throw new Error('Pending implementation create relations');
-                    } else {
-                        throw new Error(`Unexpected field name ${fieldName}`);
-                    }
+                    throw new Error(`Unexpected field name ${fieldName}`);
                 }
             }
-
-            context.rows.push(row);
         }
 
         if ('select' in args || 'include' in args) {

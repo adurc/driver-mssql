@@ -20,8 +20,6 @@ describe('query builder delete tests', () => {
         expect(context).toBeInstanceOf(DeleteContextQueryBuilder);
 
         expect(context.entity).toEqual(entities[0]);
-        expect(context.pks).toHaveLength(1);
-        expect(context.pks[0]).toEqual(entities[0].columns[0]);
         expect(context.params).toEqual({ id: 1 });
         expect(context.returning).toBeNull();
         expect(context.tempTable).toBeNull();
@@ -52,28 +50,25 @@ WHERE
         expect(context).toBeInstanceOf(DeleteContextQueryBuilder);
 
         expect(context.entity).toEqual(entities[0]);
-        expect(context.pks).toHaveLength(1);
-        expect(context.pks[0]).toEqual(entities[0].columns[0]);
         expect(context.params).toEqual({ id: 1 });
         expect(context.returning).not.toBeNull();
         expect(context.tempTable).toEqual('@outputData');
 
         expect(sql).toEqual(`
 DECLARE @outputData AS TABLE(
-\t[id] int
+\t[id] int,
+\t[name] varchar(MAX)
 )
 
 DELETE FROM [Fake] WITH(ROWLOCK)
-OUTPUT INSERTED.[id] INTO @outputData
+OUTPUT DELETED.[id],DELETED.[name] INTO @outputData
 WHERE
 \t[id] = @id
 
 SELECT
 \t[root].[id] AS [id],
 \t[root].[name] AS [name]
-FROM [Fake] AS [root] WITH(NOLOCK)
-INNER JOIN @outputData AS [sourceData] ON
-\t[sourceData].[id] = [root].[id]
+FROM @outputData AS [root]
 `.trim());
     });
 });
