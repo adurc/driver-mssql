@@ -1,4 +1,5 @@
-import { Condition, IColumnQueryBuilder, IConditionQueryBuilder, IConditionSide, IOrderableQueryBuilder, IPaginationQueryBuilder, ITableAliasAccessor, IWherableQueryBuilder, TableColumnOrder } from './find.context';
+import { Condition, IColumnQueryBuilder, IOrderableQueryBuilder, IPaginationQueryBuilder, ITableAliasAccessor, IWherableQueryBuilder, TableColumnOrder } from './find.context';
+import { WhereBuilder } from './where.builder';
 
 export class AggregateContextQueryBuilder implements IWherableQueryBuilder, IOrderableQueryBuilder, IPaginationQueryBuilder {
 
@@ -65,14 +66,7 @@ export class AggregateContextQueryBuilder implements IWherableQueryBuilder, IOrd
 
         if (this.where.length > 0) {
             chunks.push('WHERE');
-            for (const condition of this.where) {
-                if ('ands' in condition || 'ors' in condition) {
-                    // TODO: Pending implement subtree conditions
-                    throw new Error('Not implemented subtree conditions');
-                } else if ('left' in condition) {
-                    chunks.push(`\t${this.toSqlCondition(condition)}`);
-                }
-            }
+            chunks.push(WhereBuilder.conditionsToSql(this.where));
         }
 
         if (this.orderBy.length > 0) {
@@ -87,31 +81,6 @@ export class AggregateContextQueryBuilder implements IWherableQueryBuilder, IOrd
         }
 
         return chunks.join('\n');
-    }
-
-    private toSqlConditionSide(condition: IConditionSide | number | string): string {
-        if (typeof condition === 'number') {
-            return condition.toString();
-        } else if (typeof condition === 'string') {
-            return condition.replace('\'', '\'\'');
-        } else if (condition.type === 'column') {
-            let output = '';
-
-            if (condition.source) {
-                output = `[${condition.source}].`;
-            }
-            output += `[${condition.column}]`;
-
-            return output;
-        } else if (condition.type === 'variable') {
-            return `@${condition.name}`;
-        }
-    }
-
-    private toSqlCondition(condition: IConditionQueryBuilder): string {
-        const left = this.toSqlConditionSide(condition.left);
-        const right = this.toSqlConditionSide(condition.right);
-        return `${left} ${condition.operator} ${right}`;
     }
 
     private toSqlTableAccessor(table: ITableAliasAccessor): string {

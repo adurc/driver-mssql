@@ -1,7 +1,8 @@
 import { MSSQLColumn } from '../interfaces/mssql-column';
 import { MSSQLEntity } from '../interfaces/mssql-entity';
-import { Condition, FindContextQueryBuilder, IConditionQueryBuilder, IConditionSide, IWherableQueryBuilder } from './find.context';
+import { Condition, FindContextQueryBuilder, IWherableQueryBuilder } from './find.context';
 import { IColumnOptions, ISqlType, TYPES } from 'mssql';
+import { WhereBuilder } from './where.builder';
 
 export class UpdateContextQueryBuilder implements IWherableQueryBuilder {
 
@@ -48,14 +49,7 @@ export class UpdateContextQueryBuilder implements IWherableQueryBuilder {
         }
         if (this.where.length > 0) {
             chunks.push('WHERE');
-            for (const condition of this.where) {
-                if ('ands' in condition || 'ors' in condition) {
-                    // TODO: Pending implement subtree conditions
-                    throw new Error('Not implemented subtree conditions');
-                } else if ('left' in condition) {
-                    chunks.push(`\t${this.toSqlCondition(condition)}`);
-                }
-            }
+            chunks.push(WhereBuilder.conditionsToSql(this.where));
         }
 
         if (this.returning) {
@@ -73,31 +67,6 @@ export class UpdateContextQueryBuilder implements IWherableQueryBuilder {
         } else if (value instanceof Date) {
             return `'${value.toISOString()}'`;
         }
-    }
-
-    private toSqlConditionSide(condition: IConditionSide | number | string): string {
-        if (typeof condition === 'number') {
-            return condition.toString();
-        } else if (typeof condition === 'string') {
-            return condition.replace('\'', '\'\'');
-        } else if (condition.type === 'column') {
-            let output = '';
-
-            if (condition.source) {
-                output = `[${condition.source}].`;
-            }
-            output += `[${condition.column}]`;
-
-            return output;
-        } else if (condition.type === 'variable') {
-            return `@${condition.name}`;
-        }
-    }
-
-    private toSqlCondition(condition: IConditionQueryBuilder): string {
-        const left = this.toSqlConditionSide(condition.left);
-        const right = this.toSqlConditionSide(condition.right);
-        return `${left} ${condition.operator} ${right}`;
     }
 
     private toSqlDeclare(sqlType: ISqlType, options: IColumnOptions) {

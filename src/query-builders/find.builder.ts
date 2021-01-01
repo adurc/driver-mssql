@@ -2,10 +2,10 @@ import { AdurcFindManyArgs } from '@adurc/core/dist/interfaces/client/find-many.
 import { AdurcModelInclude } from '@adurc/core/dist/interfaces/client/include';
 import { AdurcModelSelect } from '@adurc/core/dist/interfaces/client/select';
 import { AdurcModelOrderBy } from '@adurc/core/dist/interfaces/client/sort';
-import { AdurcModelWhere } from '@adurc/core/dist/interfaces/client/where';
 import { MSSQLEntity } from '../interfaces/mssql-entity';
 import { MSSQLRelationManyToMany, MSSQLRelationManyToOne, MSSQLRelationOneToMany } from '../interfaces/mssql-relation';
-import { FindContextQueryBuilder, IAliasAccessor, IJoinQueryBuilder, IOrderableQueryBuilder, ITableAccessor, IWherableQueryBuilder } from './find.context';
+import { FindContextQueryBuilder, IAliasAccessor, IJoinQueryBuilder, IOrderableQueryBuilder, ITableAccessor } from './find.context';
+import { WhereBuilder } from './where.builder';
 
 export class FindQueryBuilder {
 
@@ -17,7 +17,7 @@ export class FindQueryBuilder {
         context.take = args.take;
 
         this.buildSelect(args.select, entity, context);
-        args.where && this.buildWhere(args.where, entity, context, 'root');
+        args.where && WhereBuilder.buildWhere(args.where, entity, context, 'root');
         args.orderBy && this.buildOrderBy(args.orderBy, entity, context);
         args.include && this.buildInclude(args.include, entity, context);
 
@@ -62,35 +62,6 @@ export class FindQueryBuilder {
                 name: column.columnName,
                 as: column.info.name,
             });
-        }
-    }
-
-    public static buildWhere(where: AdurcModelWhere<unknown>, entity: MSSQLEntity, context: IWherableQueryBuilder, source?: string): void {
-        const sourcePreffix = source ? `${source}_` : '';
-
-        for (const field in where) {
-            if (field === '_AND' || field === '_OR') {
-                // TODO: Pending implement subtree conditions _AND and _OR
-                throw new Error('Not implemented subtree conditions _AND and _OR');
-            }
-
-            const column = entity.columns.find(x => x.info.name === field);
-            if (column) {
-                context.params[`${sourcePreffix}${field}`] = where[field];
-
-                context.where.push({
-                    left: { type: 'column', source, column: column.columnName },
-                    operator: '=',
-                    right: { type: 'variable', name: `${sourcePreffix}${field}` }
-                });
-            } else {
-                const relation = entity.relations.find(x => x.info.name === field);
-                if (relation) {
-                    // TODO: Pending implement filter over relation
-                } else {
-                    throw new Error(`Unknown field name ${field}`);
-                }
-            }
         }
     }
 

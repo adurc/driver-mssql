@@ -127,6 +127,8 @@ export class SqlServerDriver implements AdurcDriver {
 
         const sql = context.toSql();
 
+        console.log('[driver-mssql] sql: ' + JSON.stringify(sql));
+
         const request = this.pool.request();
 
         for (const param in context.params) {

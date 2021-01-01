@@ -4,6 +4,7 @@ import { MSSQLEntity } from '../interfaces/mssql-entity';
 import { AggregateContextQueryBuilder } from './aggregate.context';
 import { FindQueryBuilder } from './find.builder';
 import { IColumnQueryBuilder } from './find.context';
+import { WhereBuilder } from './where.builder';
 
 export class AggregateQueryBuilder {
 
@@ -14,7 +15,7 @@ export class AggregateQueryBuilder {
         context.skip = args.skip;
         context.take = args.take;
 
-        args.where && FindQueryBuilder.buildWhere(args.where, entity, context);
+        args.where && WhereBuilder.buildWhere(args.where, entity, context);
         args.orderBy && FindQueryBuilder.buildOrderBy(args.orderBy, entity, context);
 
         context.count = args.count === true;

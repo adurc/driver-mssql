@@ -1,3 +1,5 @@
+import { WhereBuilder } from './where.builder';
+
 export interface IColumnQueryBuilder {
     source?: string;
     as?: string;
@@ -25,16 +27,19 @@ export interface ITemporalTableAccessor {
 
 export type ITemporalTableAliasAccessor = ITemporalTableAccessor & IAliasAccessor;
 
-export type OperatorType = '=';
+export type OperatorType = '=' | 'in';
 
 export type IConditionSide = { type: 'column', source?: string, column: string }
     | { type: 'variable', name: string };
 
-export interface IConditionQueryBuilder {
-    left: IConditionSide | number | string;
+export type IConditionQueryBuilder = {
+    left: IConditionSide | number | string
     operator: OperatorType;
-    right: IConditionSide | number | string;
-}
+} & (
+        { operator: 'in', right: IConditionSide[] }
+        | { operator: '=', right: IConditionSide | number | string }
+    )
+
 
 export type JoinType = 'left' | 'inner';
 
@@ -131,21 +136,12 @@ export class FindContextQueryBuilder implements IWherableQueryBuilder, IOrderabl
 
         for (const join of this.joins) {
             chunks.push(`${join.type.toUpperCase()} JOIN ${join.from.type === 'table' ? this.toSqlTableAccessor(join.from) : this.toSqlTemporalTableAccessor(join.from)} ON`);
-            for (const condition of join.conditions) {
-                chunks.push(`\t${this.toSqlCondition(condition)}`);
-            }
+            chunks.push(WhereBuilder.conditionsToSql(join.conditions));
         }
 
         if (this.where.length > 0) {
             chunks.push('WHERE');
-            for (const condition of this.where) {
-                if ('ands' in condition || 'ors' in condition) {
-                    // TODO: Pending implement subtree conditions
-                    throw new Error('Not implemented subtree conditions');
-                } else if ('left' in condition) {
-                    chunks.push(`\t${this.toSqlCondition(condition)}`);
-                }
-            }
+            chunks.push(WhereBuilder.conditionsToSql(this.where));
         }
 
         if (this.orderBy.length > 0) {
@@ -179,30 +175,7 @@ export class FindContextQueryBuilder implements IWherableQueryBuilder, IOrderabl
         return chunks.join('\n');
     }
 
-    private toSqlConditionSide(condition: IConditionSide | number | string): string {
-        if (typeof condition === 'number') {
-            return condition.toString();
-        } else if (typeof condition === 'string') {
-            return condition.replace('\'', '\'\'');
-        } else if (condition.type === 'column') {
-            let output = '';
 
-            if (condition.source) {
-                output = `[${condition.source}].`;
-            }
-            output += `[${condition.column}]`;
-
-            return output;
-        } else if (condition.type === 'variable') {
-            return `@${condition.name}`;
-        }
-    }
-
-    private toSqlCondition(condition: IConditionQueryBuilder): string {
-        const left = this.toSqlConditionSide(condition.left);
-        const right = this.toSqlConditionSide(condition.right);
-        return `${left} ${condition.operator} ${right}`;
-    }
 
     private toSqlObjectAccessor(obj: ITableAliasAccessor | ITemporalTableAliasAccessor): string {
         switch (obj.type) {

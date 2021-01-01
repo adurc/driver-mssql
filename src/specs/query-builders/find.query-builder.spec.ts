@@ -158,6 +158,39 @@ WHERE
 `.trim());
     });
 
+    it('where in operator for a column', () => {
+        const models: AdurcModel[] = [SimpleAdurcModel];
+        const entities = EntityConverter.fromModels('mssql', models);
+
+        const context = FindQueryBuilder.build(entities, entities[0], {
+            select: {
+                name: true,
+            },
+            where: {
+                id: { in: [1, 2] },
+            }
+        });
+
+        const sql = context.toSql();
+
+        expect(context).toBeInstanceOf(FindContextQueryBuilder);
+        expect(context.where).toHaveLength(1);
+        expect(context.where[0]).toEqual({
+            left: { type: 'column', source: 'root', column: 'id' },
+            operator: 'in',
+            right: [{ type: 'variable', name: 'root_id_0' }, { type: 'variable', name: 'root_id_1' }],
+        });
+        expect(context.params).toEqual({ 'root_id_0': 1, 'root_id_1': 2 });
+
+        expect(sql).toEqual(`
+SELECT
+\t[root].[name] AS [name]
+FROM [Fake] AS [root] WITH(NOLOCK)
+WHERE
+\t[root].[id] in (@root_id_0,@root_id_1)
+`.trim());
+    });
+
     it('many to one query', () => {
         const entities = EntityConverter.fromModels('mssql', bagEntities);
 

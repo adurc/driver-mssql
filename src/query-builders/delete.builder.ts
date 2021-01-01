@@ -3,13 +3,14 @@ import { AdurcDeleteArgs } from '@adurc/core/dist/interfaces/client/delete.args'
 import { MSSQLEntity } from '../interfaces/mssql-entity';
 import { DeleteContextQueryBuilder } from './delete.context';
 import { FindQueryBuilder } from './find.builder';
+import { WhereBuilder } from './where.builder';
 
 export class DeleteQueryBuilder {
 
     static build(entities: MSSQLEntity[], entity: MSSQLEntity, args: AdurcDeleteArgs): DeleteContextQueryBuilder {
         const context = new DeleteContextQueryBuilder();
 
-        args.where && FindQueryBuilder.buildWhere(args.where, entity, context);
+        args.where && WhereBuilder.buildWhere(args.where, entity, context);
 
         context.entity = entity;
 

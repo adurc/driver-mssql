@@ -4,13 +4,14 @@ import { MSSQLEntity } from '../interfaces/mssql-entity';
 import { FindQueryBuilder } from './find.builder';
 import { IConditionQueryBuilder } from './find.context';
 import { UpdateContextQueryBuilder } from './update.context';
+import { WhereBuilder } from './where.builder';
 
 export class UpdateQueryBuilder {
 
     static build(entities: MSSQLEntity[], entity: MSSQLEntity, args: AdurcUpdateArgs): UpdateContextQueryBuilder {
         const context = new UpdateContextQueryBuilder();
 
-        args.where && FindQueryBuilder.buildWhere(args.where, entity, context);
+        args.where && WhereBuilder.buildWhere(args.where, entity, context);
 
         context.entity = entity;
         context.pks = entity.columns.filter(x => x.options.primary);
