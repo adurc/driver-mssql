@@ -1,6 +1,6 @@
 {
   "name": "@adurc/driver-mssql",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -13,7 +13,7 @@
     "build": "tsc",
     "lint": "eslint --fix src/**",
     "release": "standard-version",
-    "prepublishOnly": "npm test && npm run lint && npm run build",
+    "prerelease": "npm test && npm run lint && npm run build",
     "test": "jest"
   },
   "repository": {
