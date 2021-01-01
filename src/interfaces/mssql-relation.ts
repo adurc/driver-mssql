@@ -22,10 +22,12 @@ export type MSSQLRelationManyToMany = {
     type: 'manyToMany';
     joinEntity: MSSQLEntity;
     joinColumn: string;
+    
+    manyEntity: MSSQLEntity;
+    manyJoinColumn: string;
+    manyInverseColumn: string;
+    
     inverseColumn: string;
-    manyTableName: string;
-    joinColumnReferencedColumnName: string;
-    inverseColumnReferencedColumnName: string;
 }
 
 export type MSSQLRelation = MSSQLRelationManyToOne | MSSQLRelationOneToMany | MSSQLRelationManyToMany;

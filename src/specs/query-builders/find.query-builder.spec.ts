@@ -338,7 +338,7 @@ INNER JOIN #main AS [parent] ON
         expect(context.temporalColumns[0]).toEqual<IColumnQueryBuilder>({ source: 'root', name: 'id', as: '__id' });
         expect(context.children).toHaveLength(1);
 
-        expect(context.children[0].from).toEqual<ITableAliasAccessor>({ type: 'table', table: 'UserAgency', as: 'many' });
+        expect(context.children[0].from).toEqual<ITableAliasAccessor>({ type: 'table', schema: 'usr', table: 'UserAgency', as: 'many' });
         expect(context.children[0].columns).toHaveLength(1);
         expect(context.children[0].columns[0]).toEqual<IColumnQueryBuilder>({ source: 'root', name: 'name', as: 'name' });
         expect(context.children[0].params).toEqual<Record<string, unknown>>({});
@@ -377,7 +377,7 @@ FROM #main
 
 SELECT
 \t[root].[name] AS [name]
-FROM [UserAgency] AS [many] WITH(NOLOCK)
+FROM [usr].[UserAgency] AS [many] WITH(NOLOCK)
 INNER JOIN [#main] AS [parent] WITH(NOLOCK) ON
 \t[parent].[__id] = [many].[userId]
 INNER JOIN [Agency] AS [root] WITH(NOLOCK) ON

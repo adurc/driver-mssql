@@ -101,11 +101,7 @@ export class FindQueryBuilder {
         });
 
         const relationContext = new FindContextQueryBuilder();
-        relationContext.from = {
-            type: 'object',
-            name: relation.manyTableName,
-            as: 'many',
-        };
+        relationContext.from = this.buildTableAccessor(relation.manyEntity.tableName, 'many', relation.manyEntity.schema, relation.manyEntity.database);
 
         relationContext.joins.push({
             type: 'inner',
@@ -118,7 +114,7 @@ export class FindQueryBuilder {
                 {
                     left: { type: 'column', source: 'parent', column: `__${relation.joinColumn}` },
                     operator: '=',
-                    right: { type: 'column', source: 'many', column: relation.joinColumnReferencedColumnName }
+                    right: { type: 'column', source: 'many', column: relation.manyJoinColumn }
                 }
             ],
         });
@@ -130,7 +126,7 @@ export class FindQueryBuilder {
                 {
                     left: { type: 'column', source: 'root', column: relation.inverseColumn },
                     operator: '=',
-                    right: { type: 'column', source: 'many', column: relation.inverseColumnReferencedColumnName },
+                    right: { type: 'column', source: 'many', column: relation.manyInverseColumn },
                 }
             ],
         });

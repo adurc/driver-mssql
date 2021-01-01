@@ -117,15 +117,20 @@ export class EntityConverter {
 
                     const relation = relations[0];
                     if (relation.name === 'manyToMany') {
+                        const manyEntity = entities.find(x => x.info.name === relation.args.manyEntity);
+                        if (!manyEntity) {
+                            throw new Error(`Model ${relation.args.manyEntity} not found`);
+                        }
                         entity.relations.push({
                             info: field,
                             type: 'manyToMany',
                             joinEntity: inverseEntity,
-                            manyTableName: relation.args.manyTableName as string,
-                            inverseColumn: relation.args.inverseColumn as string,
-                            inverseColumnReferencedColumnName: relation.args.inverseColumnReferencedColumnName as string,
                             joinColumn: relation.args.joinColumn as string,
-                            joinColumnReferencedColumnName: relation.args.joinColumnReferencedColumnName as string,
+
+                            manyEntity,
+                            manyJoinColumn: relation.args.manyJoinColumn as string,
+                            manyInverseColumn: relation.args.manyInverseColumn as string,
+                            inverseColumn: relation.args.inverseColumn as string,
                         });
                     } else {
                         entity.relations.push({

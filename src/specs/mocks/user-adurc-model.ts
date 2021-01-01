@@ -47,7 +47,7 @@ export const UserAdurcModel: AdurcModel = {
             collection: true,
             nonNull: true,
             directives: [
-                { provider: 'mssql', name: 'manyToMany', args: { manyTableName: 'UserAgency', joinColumn: 'id', joinColumnReferencedColumnName: 'userId', inverseColumnReferencedColumnName: 'agencyId', inverseColumn: 'id' } },
+                { provider: 'mssql', name: 'manyToMany', args: { manyEntity: 'UserAgency', joinColumn: 'id', manyJoinColumn: 'userId', manyInverseColumn: 'agencyId', inverseColumn: 'id' } },
             ],
         }
     ],
