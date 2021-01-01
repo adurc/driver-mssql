@@ -2,7 +2,7 @@ import { AdurcModel } from '@adurc/core/dist/interfaces/model';
 import { EntityConverter } from '../../entity.converter';
 import { SimpleAdurcModel } from '../mocks/simple-adurc-model';
 import { FindQueryBuilder } from '../../query-builders/find.builder';
-import { FindContextQueryBuilder, IColumnQueryBuilder, IConditionSide, ITableAliasAccessor, ITemporalTableAliasAccessor, OperatorType } from '../../query-builders/find.context';
+import { FindContextQueryBuilder, IColumnQueryBuilder, IConditionSide, ITableAliasAccessor, IObjectAliasAccessor, OperatorType } from '../../query-builders/find.context';
 import { bagEntities } from '../mocks/bag-entities';
 
 describe('query builder find tests', () => {
@@ -279,7 +279,7 @@ INNER JOIN [Profile] AS [profile] WITH(NOLOCK) ON
         expect(context.children[0].temporalColumns).toHaveLength(0);
         expect(context.children[0].joins).toHaveLength(1);
         expect(context.children[0].joins[0].type).toEqual('inner');
-        expect(context.children[0].joins[0].from).toEqual<ITemporalTableAliasAccessor>({ type: 'temporal-table', object: '#main', as: 'parent' });
+        expect(context.children[0].joins[0].from).toEqual<IObjectAliasAccessor>({ type: 'object', name: '#main', as: 'parent' });
         expect(context.children[0].joins[0].conditions).toHaveLength(1);
         expect(context.children[0].joins[0].conditions[0].left).toEqual<IConditionSide>({ type: 'column', source: 'parent', column: '__id' });
         expect(context.children[0].joins[0].conditions[0].operator).toEqual<OperatorType>('=');

@@ -23,6 +23,7 @@ import { UpdateQueryBuilder } from './query-builders/update.builder';
 import { DeleteQueryBuilder } from './query-builders/delete.builder';
 import { AggregateResult } from '@adurc/core/dist/interfaces/client/aggregate.result';
 import { AggregateQueryBuilder } from './query-builders/aggregate.builder';
+import { manyToManyDirective } from './directives/many-to-many.directive';
 
 export class SqlServerDriver implements AdurcDriver {
     private readonly pool: mssql.ConnectionPool;
@@ -70,6 +71,8 @@ export class SqlServerDriver implements AdurcDriver {
         console.log('[driver-mssql] context: ' + JSON.stringify(context));
 
         const sql = context.toSql();
+
+        console.log('[driver-mssql] sql: ' + JSON.stringify(sql));
 
         const request = this.pool.request();
 
@@ -182,7 +185,7 @@ export class SqlServerDriver implements AdurcDriver {
             context.directives.push(fieldDirective);
             context.directives.push(oneToManyDirective);
             context.directives.push(manyToOneDirective);
-            context.directives.push(oneToManyDirective);
+            context.directives.push(manyToManyDirective);
 
             yield BuilderStage.OnInit;
 

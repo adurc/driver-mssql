@@ -102,8 +102,8 @@ export class FindQueryBuilder {
 
         const relationContext = new FindContextQueryBuilder();
         relationContext.from = {
-            type: 'table',
-            table: relation.manyTableName,
+            type: 'object',
+            name: relation.manyTableName,
             as: 'many',
         };
 
@@ -174,8 +174,8 @@ export class FindQueryBuilder {
         relationContext.joins.push({
             type: 'inner',
             from: {
-                type: 'temporal-table',
-                object: '#main',
+                type: 'object',
+                name: '#main',
                 as: 'parent',
             },
             conditions: [

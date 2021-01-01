@@ -95,7 +95,7 @@ export class EntityConverter {
                     entity.columns.push(column);
                 } else {
                     const type = field.type as AdurcFieldReference;
-                    if (type.source !== 'mssql') {
+                    if (type.source !== source) {
                         continue;
                     }
 

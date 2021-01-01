@@ -17,7 +17,7 @@ export class DeleteQueryBuilder {
         if ('select' in args || 'include' in args) {
             context.tempTable = '@outputData';
             context.returning = FindQueryBuilder.build(entities, entity, { select: args.select, include: args.include });
-            context.returning.from = { type: 'temporal-table', object: '@outputData', as: context.returning.from.as };
+            context.returning.from = { type: 'object', name: '@outputData', as: context.returning.from.as };
         }
 
         return context;

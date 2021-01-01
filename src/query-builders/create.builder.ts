@@ -45,7 +45,7 @@ export class CreateQueryBuilder {
             context.returning.joins = [
                 {
                     type: 'inner',
-                    from: { type: 'temporal-table', object: '@outputData', as: 'sourceData' },
+                    from: { type: 'object', name: '@outputData', as: 'sourceData' },
                     conditions: context.pks.map<IConditionQueryBuilder>(x => ({
                         left: {
                             type: 'column',
