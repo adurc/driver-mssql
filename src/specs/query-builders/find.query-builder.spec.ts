@@ -4,6 +4,7 @@ import { SimpleAdurcModel } from '../mocks/simple-adurc-model';
 import { FindQueryBuilder } from '../../query-builders/find.builder';
 import { FindContextQueryBuilder, IColumnQueryBuilder, IConditionSide, ITableAliasAccessor, IObjectAliasAccessor, OperatorType } from '../../query-builders/find.context';
 import { bagEntities } from '../mocks/bag-entities';
+import { DiffNamesAdurcModel } from '../mocks/diff-names-adurc-model';
 
 describe('query builder find tests', () => {
     it('basic select query', () => {
@@ -31,6 +32,34 @@ SELECT
 \t[root].[id] AS [id],
 \t[root].[name] AS [name]
 FROM [Fake] AS [root] WITH(NOLOCK)
+`.trim());
+    });
+
+    it('select with different column names', () => {
+        const models: AdurcModel[] = [DiffNamesAdurcModel];
+        const entities = EntityConverter.fromModels('mssql', models);
+
+        const context = FindQueryBuilder.build(entities, entities[0], {
+            select: {
+                id: true,
+                name: true,
+            }
+        });
+
+        const sql = context.toSql();
+
+        expect(context).toBeInstanceOf(FindContextQueryBuilder);
+
+        expect(context.from).toEqual({ type: 'table', table: 'A_DIFF_NAME', as: 'root' });
+        expect(context.columns).toHaveLength(2);
+        expect(context.columns[0]).toEqual({ source: 'root', name: 'diffNameId', as: 'id' });
+        expect(context.columns[1]).toEqual({ source: 'root', name: 'NAME', as: 'name' });
+
+        expect(sql).toEqual(`
+SELECT
+\t[root].[diffNameId] AS [id],
+\t[root].[NAME] AS [name]
+FROM [A_DIFF_NAME] AS [root] WITH(NOLOCK)
 `.trim());
     });
 

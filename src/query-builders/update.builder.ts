@@ -42,7 +42,7 @@ export class UpdateQueryBuilder {
                         left: {
                             type: 'column',
                             source: 'sourceData',
-                            column: x.columnName,
+                            column: x.info.name,
                         },
                         operator: '=',
                         right: {

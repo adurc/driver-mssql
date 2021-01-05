@@ -3,6 +3,7 @@ import { EntityConverter } from '../../entity.converter';
 import { SimpleAdurcModel } from '../mocks/simple-adurc-model';
 import { UpdateQueryBuilder } from '../../query-builders/update.builder';
 import { UpdateContextQueryBuilder } from '../../query-builders/update.context';
+import { DiffNamesAdurcModel } from '../mocks/diff-names-adurc-model';
 
 describe('query builder update tests', () => {
     it('update query without returning', () => {
@@ -80,6 +81,53 @@ SELECT
 FROM [Fake] AS [root] WITH(NOLOCK)
 INNER JOIN @outputData AS [sourceData] ON
 \t[sourceData].[id] = [root].[id]
+`.trim());
+    });
+
+    it('update query with different columns names', () => {
+        const models: AdurcModel[] = [DiffNamesAdurcModel];
+        const entities = EntityConverter.fromModels('mssql', models);
+
+        const context = UpdateQueryBuilder.build(entities, entities[0], {
+            where: {
+                id: 1,
+            },
+            set: { name: 'Loremp ipsum' },
+            select: {
+                id: true,
+                name: true,
+            }
+        });
+
+        const sql = context.toSql();
+
+        expect(context).toBeInstanceOf(UpdateContextQueryBuilder);
+
+        expect(context.entity).toEqual(entities[0]);
+        expect(context.pks).toHaveLength(1);
+        expect(context.pks[0]).toEqual(entities[0].columns[0]);
+        expect(context.params).toEqual({ id: 1 });
+        expect(context.returning).not.toBeNull();
+        expect(context.tempTable).toEqual('@outputData');
+        expect(context.set).toEqual({ NAME: 'Loremp ipsum' });
+
+        expect(sql).toEqual(`
+DECLARE @outputData AS TABLE(
+\t[id] int
+)
+
+UPDATE [A_DIFF_NAME] WITH(ROWLOCK) SET
+\t[NAME] = 'Loremp ipsum'
+OUTPUT INSERTED.[diffNameId] INTO @outputData
+WHERE
+\t[diffNameId] = @id
+
+SELECT
+\t[root].[diffNameId] AS [id],
+\t[root].[NAME] AS [name]
+FROM [A_DIFF_NAME] AS [root] WITH(NOLOCK)
+INNER JOIN @outputData AS [sourceData] ON
+\t[sourceData].[id] = [root].[diffNameId]
 `.trim());
     });
 });
