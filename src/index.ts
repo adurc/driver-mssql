@@ -36,7 +36,7 @@ export class SqlServerDriver implements AdurcDriver {
     }
 
     async createMany(model: AdurcModel, args: AdurcCreateArgs): Promise<BatchResult> {
-        this.logger?.debug('[driver-mssql] createMany model: ' + model.name + ', args: ' + JSON.stringify(args));
+        this.logger?.debug('[driver-mssql] create many model: ' + model.name, { model: model.name, args });
 
         const entity = this.entities.find(x => x.info.name === model.name);
         if (!entity) {
@@ -44,8 +44,6 @@ export class SqlServerDriver implements AdurcDriver {
         }
 
         const context = CreateQueryBuilder.build(this.entities, entity, args);
-
-        this.logger?.debug('[driver-mssql] context: ' + JSON.stringify(context));
 
         const sql = context.toSql();
 
@@ -63,18 +61,14 @@ export class SqlServerDriver implements AdurcDriver {
     }
 
     async findMany(model: AdurcModel, args: AdurcFindManyArgs): Promise<AdurcModelUntyped[]> {
-        this.logger?.debug('[driver-mssql] findMany model: ' + model.name + ', args: ' + JSON.stringify(args));
+        this.logger?.debug('[driver-mssql] find many model: ' + model.name, { model: model.name, args });
         const entity = this.entities.find(x => x.info.name === model.name);
         if (!entity) {
             throw new Error(`[driver-mssq] Entity linked to model ${model.name} not found`);
         }
         const context = FindQueryBuilder.build(this.entities, entity, args);
 
-        this.logger?.debug('[driver-mssql] context: ' + JSON.stringify(context));
-
         const sql = context.toSql();
-
-        this.logger?.debug('[driver-mssql] sql: ' + JSON.stringify(sql));
 
         const request = this.pool.request();
 
@@ -88,7 +82,7 @@ export class SqlServerDriver implements AdurcDriver {
     }
 
     async updateMany(model: AdurcModel, args: AdurcUpdateArgs): Promise<BatchResult> {
-        this.logger?.debug('[driver-mssql] updateMany model: ' + model.name + ', args: ' + JSON.stringify(args));
+        this.logger?.debug('[driver-mssql] update many model: ' + model.name, { model: model.name, args });
 
         const entity = this.entities.find(x => x.info.name === model.name);
         if (!entity) {
@@ -96,8 +90,6 @@ export class SqlServerDriver implements AdurcDriver {
         }
 
         const context = UpdateQueryBuilder.build(this.entities, entity, args);
-
-        this.logger?.debug('[driver-mssql] context: ' + JSON.stringify(context));
 
         const sql = context.toSql();
 
@@ -119,7 +111,7 @@ export class SqlServerDriver implements AdurcDriver {
     }
 
     async deleteMany(model: AdurcModel, args: AdurcDeleteArgs): Promise<BatchResult> {
-        this.logger?.debug('[driver-mssql] deleteMany model: ' + model.name + ', args: ' + JSON.stringify(args));
+        this.logger?.debug('[driver-mssql] delete many model: ' + model.name, { model: model.name, args });
 
         const entity = this.entities.find(x => x.info.name === model.name);
         if (!entity) {
@@ -128,11 +120,7 @@ export class SqlServerDriver implements AdurcDriver {
 
         const context = DeleteQueryBuilder.build(this.entities, entity, args);
 
-        this.logger?.debug('[driver-mssql] context: ' + JSON.stringify(context));
-
         const sql = context.toSql();
-
-        this.logger?.debug('[driver-mssql] sql: ' + JSON.stringify(sql));
 
         const request = this.pool.request();
 
@@ -146,7 +134,7 @@ export class SqlServerDriver implements AdurcDriver {
     }
 
     async aggregate(model: AdurcModel, args: AdurcAggregateArgs): Promise<AggregateResult> {
-        this.logger?.debug('[driver-mssql] aggregate model: ' + model.name + ', args: ' + JSON.stringify(args));
+        this.logger?.debug('[driver-mssql] aggregate model: ' + model.name, { model: model.name, args });
 
         const entity = this.entities.find(x => x.info.name === model.name);
         if (!entity) {
@@ -154,8 +142,6 @@ export class SqlServerDriver implements AdurcDriver {
         }
 
         const context = AggregateQueryBuilder.build(this.entities, entity, args);
-
-        this.logger?.debug('[driver-mssql] context: ' + JSON.stringify(context));
 
         const sql = context.toSql();
 
