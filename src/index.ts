@@ -9,7 +9,6 @@ import { AdurcUpdateArgs } from '@adurc/core/dist/interfaces/client/update.args'
 import { BuilderGeneratorFunction, BuilderStage } from '@adurc/core/dist/interfaces/builder.generator';
 import { entityDirective } from './directives/entity.directive';
 import { columnDirective } from './directives/column.directive';
-import { fieldDirective } from './directives/field.directive';
 import { oneToManyDirective } from './directives/one-to-many.directive';
 import { manyToOneDirective } from './directives/many-to-one.directive';
 import { EntityConverter } from './entity.converter';
@@ -176,7 +175,6 @@ export class SqlServerDriver implements AdurcDriver {
 
             context.addDirective(entityDirective);
             context.addDirective(columnDirective);
-            context.addDirective(fieldDirective);
             context.addDirective(oneToManyDirective);
             context.addDirective(manyToOneDirective);
             context.addDirective(manyToManyDirective);
