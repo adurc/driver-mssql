@@ -27,7 +27,7 @@ export class EntityConverter {
         }
     }
 
-    public static fromModels(source: string, models: AdurcModel[]): MSSQLEntity[] {
+    public static fromModels(source: string, models: ReadonlyArray<AdurcModel>): MSSQLEntity[] {
 
         const entities: MSSQLEntity[] = [];
 

@@ -172,14 +172,14 @@ export class SqlServerDriver implements AdurcDriver {
         return async function* SourceGenerator(context) {
             driver.setLogger(context.logger);
 
-            context.sources.push({ name, driver });
+            context.addSource({ name, driver });
 
-            context.directives.push(entityDirective);
-            context.directives.push(columnDirective);
-            context.directives.push(fieldDirective);
-            context.directives.push(oneToManyDirective);
-            context.directives.push(manyToOneDirective);
-            context.directives.push(manyToManyDirective);
+            context.addDirective(entityDirective);
+            context.addDirective(columnDirective);
+            context.addDirective(fieldDirective);
+            context.addDirective(oneToManyDirective);
+            context.addDirective(manyToOneDirective);
+            context.addDirective(manyToManyDirective);
 
             yield BuilderStage.OnInit;
 
