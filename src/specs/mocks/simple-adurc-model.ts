@@ -1,8 +1,7 @@
 import { AdurcModel } from '@adurc/core/dist/interfaces/model';
-import { MSSQLEntity } from '../../interfaces/mssql-entity';
-import sql from 'mssql';
+import { AdurcSchemaUtils } from '@adurc/core/dist/schema.utils';
 
-export const SimpleAdurcModel: AdurcModel = {
+export const SimpleAdurcModel: AdurcModel = AdurcSchemaUtils.convertModelSchemaToModel({
     source: 'mssql',
     name: 'Fake',
     directives: [],
@@ -22,28 +21,4 @@ export const SimpleAdurcModel: AdurcModel = {
             directives: [],
         }
     ],
-};
-
-export const SimpleMSSQLEntity: MSSQLEntity = {
-    info: SimpleAdurcModel,
-    relations: [],
-    columns: [{
-        columnName: 'id',
-        sqlType: sql.Int(),
-        options: {
-            primary: true,
-            identity: false,
-            nullable: false,
-            readOnly: false,
-        },
-        info: SimpleAdurcModel.fields[0],
-    }, {
-        columnName: 'name',
-        sqlType: sql.VarChar(),
-        options: {
-            nullable: false,
-        },
-        info: SimpleAdurcModel.fields[1],
-    }],
-    tableName: 'Fake',
-};
+});

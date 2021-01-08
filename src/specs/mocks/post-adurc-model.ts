@@ -1,6 +1,7 @@
 import { AdurcModel } from '@adurc/core/dist/interfaces/model';
+import { AdurcSchemaUtils } from '@adurc/core/dist/schema.utils';
 
-export const PostAdurcModel: AdurcModel = {
+export const PostAdurcModel: AdurcModel = AdurcSchemaUtils.convertModelSchemaToModel({
     name: 'Post',
     source: 'mssql',
     directives: [],
@@ -12,4 +13,4 @@ export const PostAdurcModel: AdurcModel = {
         { name: 'authorId', type: 'int', nonNull: false, directives: [], collection: false, },
         { name: 'author', type: { model: 'User', source: 'mssql' }, nonNull: false, directives: [{ provider: 'mssql', name: 'manyToOne', args: { inverseColumn: 'id', joinColumn: 'userId' } },], collection: false, },
     ],
-};
+});

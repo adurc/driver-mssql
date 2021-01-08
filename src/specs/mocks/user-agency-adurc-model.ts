@@ -1,6 +1,7 @@
 import { AdurcModel } from '@adurc/core/dist/interfaces/model';
+import { AdurcSchemaUtils } from '@adurc/core/dist/schema.utils';
 
-export const UserAgencyAdurcModel: AdurcModel = {
+export const UserAgencyAdurcModel: AdurcModel = AdurcSchemaUtils.convertModelSchemaToModel({
     source: 'mssql',
     name: 'UserAgency',
     directives: [
@@ -22,4 +23,4 @@ export const UserAgencyAdurcModel: AdurcModel = {
             directives: [{ name: 'column', args: { primary: true }, provider: 'mssql' }],
         },
     ],
-};
+});

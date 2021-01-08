@@ -1,6 +1,7 @@
 import { AdurcModel } from '@adurc/core/dist/interfaces/model';
+import { AdurcSchemaUtils } from '@adurc/core/dist/schema.utils';
 
-export const ProfileAdurcModel: AdurcModel = {
+export const ProfileAdurcModel: AdurcModel = AdurcSchemaUtils.convertModelSchemaToModel({
     source: 'mssql',
     name: 'Profile',
     directives: [],
@@ -35,4 +36,4 @@ export const ProfileAdurcModel: AdurcModel = {
             ],
         }
     ],
-};
+});
