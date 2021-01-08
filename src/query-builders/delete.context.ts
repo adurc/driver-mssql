@@ -23,7 +23,7 @@ export class DeleteContextQueryBuilder implements IWherableQueryBuilder {
 
         if (this.tempTable) {
             chunks.push(`DECLARE ${this.tempTable} AS TABLE(`);
-            chunks.push(this.entity.columns.map(x => `\t[${x.info.name}] ${this.toSqlDeclare(x.sqlType, x.options)}`)
+            chunks.push(this.entity.columns.map(x => `\t[${x.info.accessorName}] ${this.toSqlDeclare(x.sqlType, x.options)}`)
                 .join(',\n'));
             chunks.push(')');
             chunks.push('');

@@ -14,7 +14,7 @@ export class WhereBuilder {
                 throw new Error('Not implemented subtree conditions _AND and _OR');
             }
 
-            const column = entity.columns.find(x => x.info.name === field);
+            const column = entity.columns.find(x => x.info.accessorName === field);
             if (column) {
                 const paramKey = sourcePreffix + field;
 
@@ -43,7 +43,7 @@ export class WhereBuilder {
                     }
                 }
             } else {
-                const relation = entity.relations.find(x => x.info.name === field);
+                const relation = entity.relations.find(x => x.info.accessorName === field);
                 if (relation) {
                     // TODO: Pending implement filter over relation
                 } else {

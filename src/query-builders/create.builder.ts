@@ -18,11 +18,11 @@ export class CreateQueryBuilder {
 
             for (const fieldName in object) {
                 const value = object[fieldName];
-                const column = entity.columns.find(x => x.info.name === fieldName);
+                const column = entity.columns.find(x => x.info.accessorName === fieldName);
                 if (column) {
                     row[column.columnName] = value;
                 } else {
-                    const relation = entity.relations.find(x => x.info.name === fieldName);
+                    const relation = entity.relations.find(x => x.info.accessorName === fieldName);
                     if (relation) {
                         // switch (relation.type) {
                         //     case 'manyToOne':
@@ -50,7 +50,7 @@ export class CreateQueryBuilder {
                         left: {
                             type: 'column',
                             source: 'sourceData',
-                            column: x.info.name,
+                            column: x.info.accessorName,
                         },
                         operator: '=',
                         right: {

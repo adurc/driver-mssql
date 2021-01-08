@@ -86,18 +86,18 @@ export class RecordsetConverter {
         };
 
         for (const include in args.include) {
-            const relation = entity.relations.find(x => x.info.name === include);
+            const relation = entity.relations.find(x => x.info.accessorName === include);
             const value = args.include[include];
             if (relation.type === 'manyToOne') {
                 if (typeof value === 'object') {
-                    item[include] = this.convertEntityRecordsetRowSelect(row, value as AdurcModelSelectUntyped, relation.info.name + '.');
+                    item[include] = this.convertEntityRecordsetRowSelect(row, value as AdurcModelSelectUntyped, relation.info.accessorName + '.');
                 } else {
                     throw new Error('Pending implement projection for all object when value is true');
                 }
             } else if (relation.type === 'oneToMany' || relation.type === 'manyToMany') {
                 const pkRecord: Record<string, unknown> = {};
                 for (const pk of entity.columns.filter(x => x.options.primary)) {
-                    pkRecord[pk.info.name] = row['__' + pk.info.name];
+                    pkRecord[pk.info.accessorName] = row['__' + pk.info.accessorName];
                 }
                 if (typeof value === 'object') {
                     item[include] = this.convertEntityRecordset(relation.joinEntity, value, result, recordsetOffset + 1, pkRecord);

@@ -18,11 +18,11 @@ export class UpdateQueryBuilder {
 
         for (const fieldName in args.set) {
             const value = args.set[fieldName];
-            const column = entity.columns.find(x => x.info.name === fieldName);
+            const column = entity.columns.find(x => x.info.accessorName === fieldName);
             if (column) {
                 context.set[column.columnName] = value;
             } else {
-                const relation = entity.relations.find(x => x.info.name === fieldName);
+                const relation = entity.relations.find(x => x.info.accessorName === fieldName);
                 if (relation) {
                     throw new Error('Pending implementation create relations');
                 } else {
@@ -42,7 +42,7 @@ export class UpdateQueryBuilder {
                         left: {
                             type: 'column',
                             source: 'sourceData',
-                            column: x.info.name,
+                            column: x.info.accessorName,
                         },
                         operator: '=',
                         right: {

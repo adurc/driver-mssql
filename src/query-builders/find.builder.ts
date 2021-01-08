@@ -39,7 +39,7 @@ export class FindQueryBuilder {
 
     public static buildOrderBy(orderBy: AdurcModelOrderBy<unknown>, entity: MSSQLEntity, context: IOrderableQueryBuilder): void {
         for (const field in orderBy) {
-            const column = entity.columns.find(x => x.info.name === field);
+            const column = entity.columns.find(x => x.info.accessorName === field);
 
             context.orderBy.push({
                 source: 'root',
@@ -55,12 +55,12 @@ export class FindQueryBuilder {
                 continue;
             }
 
-            const column = entity.columns.find(x => x.info.name === field);
+            const column = entity.columns.find(x => x.info.accessorName === field);
 
             context.columns.push({
                 source: 'root',
                 name: column.columnName,
-                as: column.info.name,
+                as: column.info.accessorName,
             });
         }
     }
@@ -73,7 +73,7 @@ export class FindQueryBuilder {
                 continue;
             }
 
-            const relation = entity.relations.find(x => x.info.name === field);
+            const relation = entity.relations.find(x => x.info.accessorName === field);
 
             switch (relation.type) {
                 case 'manyToMany':
@@ -136,12 +136,12 @@ export class FindQueryBuilder {
                 continue;
             }
 
-            const column = relation.joinEntity.columns.find(x => x.info.name === relationSelectField);
+            const column = relation.joinEntity.columns.find(x => x.info.accessorName === relationSelectField);
 
             relationContext.columns.push({
                 source: 'root',
                 name: column.columnName,
-                as: column.info.name,
+                as: column.info.accessorName,
             });
         }
 
@@ -192,12 +192,12 @@ export class FindQueryBuilder {
                 continue;
             }
 
-            const column = relation.joinEntity.columns.find(x => x.info.name === relationSelectField);
+            const column = relation.joinEntity.columns.find(x => x.info.accessorName === relationSelectField);
 
             relationContext.columns.push({
                 source: 'root',
                 name: column.columnName,
-                as: column.info.name,
+                as: column.info.accessorName,
             });
         }
 
@@ -208,7 +208,7 @@ export class FindQueryBuilder {
         const joinTable: ITableAccessor & IAliasAccessor = {
             type: 'table',
             table: relation.joinEntity.tableName,
-            as: relation.info.name,
+            as: relation.info.accessorName,
         };
 
 
@@ -220,7 +220,7 @@ export class FindQueryBuilder {
             from: joinTable,
             conditions: [
                 {
-                    left: { type: 'column', source: relation.info.name, column: relation.inverseColumn },
+                    left: { type: 'column', source: relation.info.accessorName, column: relation.inverseColumn },
                     operator: '=',
                     right: { type: 'column', source: 'root', column: relation.joinColumn },
                 }
@@ -233,8 +233,8 @@ export class FindQueryBuilder {
             for (const joinColumn of relation.joinEntity.columns) {
                 context.columns.push({
                     name: joinColumn.columnName,
-                    source: relation.info.name,
-                    as: `${relation.info.name}.${joinColumn.info.name}`,
+                    source: relation.info.accessorName,
+                    as: `${relation.info.accessorName}.${joinColumn.info.accessorName}`,
                 });
             }
         } else {
@@ -243,11 +243,11 @@ export class FindQueryBuilder {
                     continue;
                 }
 
-                const joinColumn = relation.joinEntity.columns.find(x => x.info.name === joinField);
+                const joinColumn = relation.joinEntity.columns.find(x => x.info.accessorName === joinField);
                 context.columns.push({
                     name: joinColumn.columnName,
-                    source: relation.info.name,
-                    as: `${relation.info.name}.${joinColumn.info.name}`,
+                    source: relation.info.accessorName,
+                    as: `${relation.info.accessorName}.${joinColumn.info.accessorName}`,
                 });
             }
         }

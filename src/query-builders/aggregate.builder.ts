@@ -31,7 +31,7 @@ export class AggregateQueryBuilder {
     static buildAgrRequest(type: string, source: string, entity: MSSQLEntity, avg: AggregateNumber): IColumnQueryBuilder[] {
         const output: IColumnQueryBuilder[] = [];
         for (const field in avg) {
-            const column = entity.columns.find(x => x.info.name === field);
+            const column = entity.columns.find(x => x.info.accessorName === field);
             if (!column) {
                 throw new Error(`Invalid field: ${field}, expected field as column. Relations not supported.`);
             }

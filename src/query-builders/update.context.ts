@@ -28,7 +28,7 @@ export class UpdateContextQueryBuilder implements IWherableQueryBuilder {
 
         if (this.tempTable) {
             chunks.push(`DECLARE ${this.tempTable} AS TABLE(`);
-            this.pks.map(x => `\t[${x.info.name}] ${this.toSqlDeclare(x.sqlType, x.options)}`).
+            this.pks.map(x => `\t[${x.info.accessorName}] ${this.toSqlDeclare(x.sqlType, x.options)}`).
                 forEach(x => chunks.push(x));
             chunks.push(')');
             chunks.push('');
