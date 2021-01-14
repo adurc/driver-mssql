@@ -46,6 +46,8 @@ export class SqlServerDriver implements AdurcDriver {
 
         const sql = context.toSql();
 
+        this.logger?.debug('[driver-mssql] ' + sql);
+
         const request = this.pool.request();
 
         if (context.returning) {
@@ -69,6 +71,8 @@ export class SqlServerDriver implements AdurcDriver {
 
         const sql = context.toSql();
 
+        this.logger?.debug('[driver-mssql] ' + sql);
+
         const request = this.pool.request();
 
         for (const param in context.params) {
@@ -91,6 +95,8 @@ export class SqlServerDriver implements AdurcDriver {
         const context = UpdateQueryBuilder.build(this.entities, entity, args);
 
         const sql = context.toSql();
+
+        this.logger?.debug('[driver-mssql] ' + sql);
 
         const request = this.pool.request();
 
@@ -121,6 +127,8 @@ export class SqlServerDriver implements AdurcDriver {
 
         const sql = context.toSql();
 
+        this.logger?.debug('[driver-mssql] ' + sql);
+
         const request = this.pool.request();
 
         for (const param in context.params) {
@@ -143,6 +151,8 @@ export class SqlServerDriver implements AdurcDriver {
         const context = AggregateQueryBuilder.build(this.entities, entity, args);
 
         const sql = context.toSql();
+
+        this.logger?.debug('[driver-mssql] ' + sql);
 
         const request = this.pool.request();
 
