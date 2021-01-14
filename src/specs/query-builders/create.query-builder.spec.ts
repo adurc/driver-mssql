@@ -4,6 +4,7 @@ import { SimpleAdurcModel } from '../mocks/simple-adurc-model';
 import { CreateQueryBuilder } from '../../query-builders/create.builder';
 import { CreateContextQueryBuilder } from '../../query-builders/create.context';
 import { DiffNamesAdurcModel } from '../mocks/diff-names-adurc-model';
+import { bagEntities } from '../mocks/bag-entities';
 
 describe('query builder create tests', () => {
     it('create query without returning', () => {
@@ -31,6 +32,51 @@ describe('query builder create tests', () => {
         expect(sql).toEqual(`
 INSERT INTO [Fake] WITH(ROWLOCK) ([name])
 VALUES ('Loremp ipsum')
+`.trim());
+    });
+
+    it('create query with multiples pks', () => {
+        const entities = EntityConverter.fromModels('mssql', bagEntities);
+        const userAgency = entities.find(x => x.info.name === 'UserAgency');
+
+        const context = CreateQueryBuilder.build(entities, userAgency, {
+            data: [
+                { userId: 159, agencyId: 9 }
+            ],
+            select: {
+                userId: true,
+                agencyId: true,
+            }
+        });
+
+        const sql = context.toSql();
+
+        expect(context).toBeInstanceOf(CreateContextQueryBuilder);
+
+        expect(context.entity).toEqual(userAgency);
+        expect(context.pks).toHaveLength(2);
+        expect(context.returning).not.toBeNull();
+        expect(context.tempTable).toEqual('@outputData');
+        expect(context.rows).toHaveLength(1);
+        expect(context.rows[0]).toEqual({ userId: 159, agencyId: 9 });
+
+        expect(sql).toEqual(`
+DECLARE @outputData AS TABLE(
+\t[userId] int,
+\t[agencyId] int
+)
+
+INSERT INTO [usr].[UserAgency] WITH(ROWLOCK) ([userId],[agencyId])
+OUTPUT INSERTED.[userId],INSERTED.[agencyId] INTO @outputData
+VALUES (159,9)
+
+SELECT
+\t[root].[userId] AS [userId],
+\t[root].[agencyId] AS [agencyId]
+FROM [usr].[UserAgency] AS [root] WITH(NOLOCK)
+INNER JOIN @outputData AS [sourceData] ON
+\t[sourceData].[userId] = [root].[userId]
+\tAND [sourceData].[agencyId] = [root].[agencyId]
 `.trim());
     });
 
