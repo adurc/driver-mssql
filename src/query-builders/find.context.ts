@@ -27,7 +27,7 @@ export interface IObjectAccessor {
 
 export type IObjectAliasAccessor = IObjectAccessor & IAliasAccessor;
 
-export type OperatorType = '=' | 'in';
+export type OperatorType = '=' | 'LIKE' | 'IN';
 
 export type IConditionSide = { type: 'column', source?: string, column: string }
     | { type: 'variable', name: string };
@@ -36,8 +36,14 @@ export type IConditionQueryBuilder = {
     left: IConditionSide | number | string
     operator: OperatorType;
 } & (
-        { operator: 'in', right: IConditionSide[] }
-        | { operator: '=', right: IConditionSide | number | string }
+        {
+            operator: 'IN',
+            right: IConditionSide[],
+        }
+        | {
+            operator: '=' | 'LIKE',
+            right: IConditionSide | number | string,
+        }
     )
 
 

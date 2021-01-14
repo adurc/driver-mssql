@@ -187,6 +187,41 @@ WHERE
 `.trim());
     });
 
+    it('where operator contains', () => {
+        const models: AdurcModel[] = [SimpleAdurcModel];
+        const entities = EntityConverter.fromModels('mssql', models);
+
+        const context = FindQueryBuilder.build(entities, entities[0], {
+            select: {
+                name: true,
+            },
+            where: {
+                name: {
+                    contains: 'adurc',
+                },
+            }
+        });
+
+        const sql = context.toSql();
+
+        expect(context).toBeInstanceOf(FindContextQueryBuilder);
+        expect(context.where).toHaveLength(1);
+        expect(context.where[0]).toEqual({
+            left: { type: 'column', source: 'root', column: 'name' },
+            operator: 'LIKE',
+            right: { type: 'variable', name: 'root_name_contains' },
+        });
+        expect(context.params).toEqual({ 'root_name_contains': '%adurc%' });
+
+        expect(sql).toEqual(`
+SELECT
+\t[root].[name] AS [name]
+FROM [Fake] AS [root] WITH(NOLOCK)
+WHERE
+\t[root].[name] LIKE @root_name_contains {escape '\\'}
+`.trim());
+    });
+
     it('where empty', () => {
         const models: AdurcModel[] = [SimpleAdurcModel];
         const entities = EntityConverter.fromModels('mssql', models);
@@ -252,17 +287,17 @@ FROM [Fake] AS [root] WITH(NOLOCK)
         expect(context.where).toHaveLength(1);
         expect(context.where[0]).toEqual({
             left: { type: 'column', source: 'root', column: 'id' },
-            operator: 'in',
-            right: [{ type: 'variable', name: 'root_id_0' }, { type: 'variable', name: 'root_id_1' }],
+            operator: 'IN',
+            right: [{ type: 'variable', name: 'root_id_in_0' }, { type: 'variable', name: 'root_id_in_1' }],
         });
-        expect(context.params).toEqual({ 'root_id_0': 1, 'root_id_1': 2 });
+        expect(context.params).toEqual({ 'root_id_in_0': 1, 'root_id_in_1': 2 });
 
         expect(sql).toEqual(`
 SELECT
 \t[root].[name] AS [name]
 FROM [Fake] AS [root] WITH(NOLOCK)
 WHERE
-\t[root].[id] in (@root_id_0,@root_id_1)
+\t[root].[id] IN (@root_id_in_0,@root_id_in_1)
 `.trim());
     });
 

@@ -75,22 +75,40 @@ export class WhereBuilder {
                 output.push({ left: { type: 'column', source, column: column.columnName }, operator: '=', right: { type: 'variable', name: paramKey } });
             } else {
                 for (const operatorType in value) {
+                    const paramKeyWithOperator = paramKey + '_' + operatorType;
                     const operatorValue = value[operatorType];
                     const conditionValues: IConditionSide[] = [];
                     switch (operatorType) {
                         case 'equals':
-                            context.params[paramKey] = value;
-                            output.push({ left: { type: 'column', source, column: column.columnName }, operator: '=', right: { type: 'variable', name: paramKey } });
+                            context.params[paramKeyWithOperator] = value;
+                            output.push({ left: { type: 'column', source, column: column.columnName }, operator: '=', right: { type: 'variable', name: paramKeyWithOperator } });
                             break;
                         case 'in':
                             if (!(operatorValue instanceof Array)) throw new Error('Expected on operator "in" an array');
                             for (let i = 0; i < operatorValue.length; i++) {
-                                const indexedParamKey = paramKey + '_' + i;
+                                const indexedParamKey = paramKeyWithOperator + '_' + i;
                                 context.params[indexedParamKey] = operatorValue[i];
                                 conditionValues.push({ type: 'variable', name: indexedParamKey });
                             }
-                            output.push({ left: { type: 'column', source, column: column.columnName }, operator: 'in', right: conditionValues });
+                            output.push({ left: { type: 'column', source, column: column.columnName }, operator: 'IN', right: conditionValues });
                             break;
+                        case 'contains':
+
+                            context.params[paramKeyWithOperator] = '%' + this.escapeLikingValue(operatorValue as string) + '%';
+                            output.push({
+                                left: {
+                                    type: 'column',
+                                    source, column: column.columnName,
+                                },
+                                operator: 'LIKE',
+                                right: {
+                                    type: 'variable',
+                                    name: paramKeyWithOperator,
+                                },
+                            });
+                            break;
+                        default:
+                            throw new Error(`Operator ${operatorType} not implemented`);
                     }
                 }
             }
@@ -104,6 +122,10 @@ export class WhereBuilder {
         }
 
         return output;
+    }
+
+    public static escapeLikingValue(value: string): string {
+        return value.replace(/([%\\])/gmi, '\\$1');
     }
 
     public static conditionsToSql(unionType: 'AND' | 'OR', conditions: Condition[], levels: number): string {
@@ -157,8 +179,11 @@ export class WhereBuilder {
         const left = this.toSqlConditionSide(condition.left);
         let right = '';
         switch (condition.operator) {
-            case 'in':
+            case 'IN':
                 right = '(' + condition.right.map((x) => this.toSqlConditionSide(x)).join(',') + ')';
+                break;
+            case 'LIKE':
+                right = this.toSqlConditionSide(condition.right) + ' {escape \'\\\'}';
                 break;
             default:
                 right = this.toSqlConditionSide(condition.right);
