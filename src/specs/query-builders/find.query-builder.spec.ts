@@ -209,6 +209,30 @@ FROM [Fake] AS [root] WITH(NOLOCK)
 `.trim());
     });
 
+    it('where ANDs empty', () => {
+        const models: AdurcModel[] = [SimpleAdurcModel];
+        const entities = EntityConverter.fromModels('mssql', models);
+
+        const context = FindQueryBuilder.build(entities, entities[0], {
+            select: {
+                name: true,
+            },
+            where: {
+                AND: [],
+            },
+        });
+
+        const sql = context.toSql();
+
+        expect(context).toBeInstanceOf(FindContextQueryBuilder);
+        expect(context.where).toHaveLength(0);
+        expect(sql).toEqual(`
+SELECT
+\t[root].[name] AS [name]
+FROM [Fake] AS [root] WITH(NOLOCK)
+`.trim());
+    });
+
     it('where in operator for a column', () => {
         const models: AdurcModel[] = [SimpleAdurcModel];
         const entities = EntityConverter.fromModels('mssql', models);

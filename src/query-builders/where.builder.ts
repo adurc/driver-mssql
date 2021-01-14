@@ -24,23 +24,27 @@ export class WhereBuilder {
             if (field === 'OR') {
                 if (!(value instanceof Array)) throw new Error('Expected array values on OR filter');
                 const ors: Condition[] = [];
-                conditionsRef.push({
-                    ors,
-                });
                 let i = 0;
                 for (const v of value) {
                     this.buildWhereNested(v, entity, context, ors, source, preffixParamNested + `or_${i++}`);
+                }
+                if (ors.length > 0) {
+                    conditionsRef.push({
+                        ors,
+                    });
                 }
                 continue;
             } else if (field === 'AND') {
                 if (!(value instanceof Array)) throw new Error('Expected array values on AND filter');
                 const ands: Condition[] = [];
-                conditionsRef.push({
-                    ands,
-                });
                 let i = 0;
                 for (const v of value) {
                     this.buildWhereNested(v, entity, context, ands, source, preffixParamNested + `and_${i++}`);
+                }
+                if (ands.length > 0) {
+                    conditionsRef.push({
+                        ands,
+                    });
                 }
                 continue;
             }
