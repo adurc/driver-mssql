@@ -136,12 +136,12 @@ export class FindContextQueryBuilder implements IWherableQueryBuilder, IOrderabl
 
         for (const join of this.joins) {
             chunks.push(`${join.type.toUpperCase()} JOIN ${join.from.type === 'table' ? this.toSqlTableAccessor(join.from) : this.toSqlObjectAccessor(join.from)} ON`);
-            chunks.push(WhereBuilder.conditionsToSql(join.conditions, 1));
+            chunks.push(WhereBuilder.conditionsToSql('AND', join.conditions, 1));
         }
 
         if (this.where.length > 0) {
             chunks.push('WHERE');
-            chunks.push(WhereBuilder.conditionsToSql(this.where, 1));
+            chunks.push(WhereBuilder.conditionsToSql('AND', this.where, 1));
         }
 
         if (this.orderBy.length > 0) {

@@ -266,6 +266,52 @@ WHERE
 `.trim());
     });
 
+    it('where with OR', () => {
+        const entities = EntityConverter.fromModels('mssql', bagEntities);
+
+        const context = FindQueryBuilder.build(entities, entities[0], {
+            select: {
+                name: true,
+            },
+            where: {
+                OR: [
+                    { name: 'Adurc' },
+                    { age: 13 },
+                ]
+            }
+        });
+
+        const sql = context.toSql();
+
+        expect(context).toBeInstanceOf(FindContextQueryBuilder);
+        expect(context.where).toHaveLength(1);
+        expect(context.where[0]).toEqual<ITreeCondition>({
+            ors: [
+                {
+                    left: { type: 'column', source: 'root', column: 'name' },
+                    operator: '=',
+                    right: { type: 'variable', name: 'root_or_0_name' },
+                }, {
+                    left: { type: 'column', source: 'root', column: 'age' },
+                    operator: '=',
+                    right: { type: 'variable', name: 'root_or_1_age' },
+                }
+            ],
+        });
+        expect(context.params).toEqual({ 'root_or_0_name': 'Adurc', 'root_or_1_age': 13 });
+
+        expect(sql).toEqual(`
+SELECT
+\t[root].[name] AS [name]
+FROM [User] AS [root] WITH(NOLOCK)
+WHERE
+\t(
+\t\t[root].[name] = @root_or_0_name
+\t\tOR [root].[age] = @root_or_1_age
+\t)
+`.trim());
+    });
+
     it('many to one query', () => {
         const entities = EntityConverter.fromModels('mssql', bagEntities);
 

@@ -66,7 +66,7 @@ export class AggregateContextQueryBuilder implements IWherableQueryBuilder, IOrd
 
         if (this.where.length > 0) {
             chunks.push('WHERE');
-            chunks.push(WhereBuilder.conditionsToSql(this.where));
+            chunks.push(WhereBuilder.conditionsToSql('AND', this.where, 1));
         }
 
         if (this.orderBy.length > 0) {

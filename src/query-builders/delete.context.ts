@@ -42,7 +42,7 @@ export class DeleteContextQueryBuilder implements IWherableQueryBuilder {
         }
         if (this.where.length > 0) {
             chunks.push('WHERE');
-            chunks.push(WhereBuilder.conditionsToSql(this.where, 1));
+            chunks.push(WhereBuilder.conditionsToSql('AND', this.where, 1));
         }
 
         if (this.returning) {

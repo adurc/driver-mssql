@@ -21,11 +21,17 @@ export class WhereBuilder {
             const value = where[field];
 
             if (field === 'OR') {
-                // TODO: Pending implement subtree conditions _AND and _OR
-                throw new Error('Not implemented subtree conditions AND and OR');
-            }
-
-            if (field === 'AND') {
+                if (!(value instanceof Array)) throw new Error('Expected array values on OR filter');
+                const ors: Condition[] = [];
+                conditionsRef.push({
+                    ors,
+                });
+                let i = 0;
+                for (const v of value) {
+                    this.buildWhereNested(v, entity, context, ors, source, preffixParam + `or_${i++}`);
+                }
+                continue;
+            } else if (field === 'AND') {
                 if (!(value instanceof Array)) throw new Error('Expected array values on AND filter');
                 const ands: Condition[] = [];
                 conditionsRef.push({
@@ -95,7 +101,7 @@ export class WhereBuilder {
         return output;
     }
 
-    public static conditionsToSql(conditions: Condition[], levels: number): string {
+    public static conditionsToSql(unionType: 'AND' | 'OR', conditions: Condition[], levels: number): string {
         const chunks: string[] = [];
         let tabs = '';
         for (let i = 0; i < levels; i++) {
@@ -104,14 +110,15 @@ export class WhereBuilder {
 
         let isFirstCondition = true;
         for (const condition of conditions) {
-            const preffix = isFirstCondition ? '' : 'AND ';
+            const preffix = isFirstCondition ? '' : unionType + ' ';
 
             if ('ors' in condition) {
-                // TODO: Pending implement subtree conditions
-                throw new Error('Not implemented subtree conditions');
+                chunks.push(`${tabs}${preffix}(`);
+                chunks.push(this.conditionsToSql('OR', condition.ors, levels + 1));
+                chunks.push(`${tabs})`);
             } else if ('ands' in condition) {
                 chunks.push(`${tabs}${preffix}(`);
-                chunks.push(this.conditionsToSql(condition.ands, levels + 1));
+                chunks.push(this.conditionsToSql('AND', condition.ands, levels + 1));
                 chunks.push(`${tabs})`);
             } else if ('left' in condition) {
                 chunks.push(`${tabs}${preffix}${this.toSqlCondition(condition)}`);
