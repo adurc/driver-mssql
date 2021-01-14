@@ -17,6 +17,7 @@ export class WhereBuilder {
         source: string,
         preffixParam: string,
     ): void {
+        const preffixParamNested = preffixParam && preffixParam.length > 0 ? preffixParam + '_' : '';
         for (const field in where) {
             const value = where[field];
 
@@ -28,7 +29,7 @@ export class WhereBuilder {
                 });
                 let i = 0;
                 for (const v of value) {
-                    this.buildWhereNested(v, entity, context, ors, source, preffixParam + `or_${i++}`);
+                    this.buildWhereNested(v, entity, context, ors, source, preffixParamNested + `or_${i++}`);
                 }
                 continue;
             } else if (field === 'AND') {
@@ -39,7 +40,7 @@ export class WhereBuilder {
                 });
                 let i = 0;
                 for (const v of value) {
-                    this.buildWhereNested(v, entity, context, ands, source, preffixParam + `and_${i++}`);
+                    this.buildWhereNested(v, entity, context, ands, source, preffixParamNested + `and_${i++}`);
                 }
                 continue;
             }
