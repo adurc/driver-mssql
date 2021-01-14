@@ -4,6 +4,7 @@ import { SimpleAdurcModel } from '../mocks/simple-adurc-model';
 import { UpdateQueryBuilder } from '../../query-builders/update.builder';
 import { UpdateContextQueryBuilder } from '../../query-builders/update.context';
 import { DiffNamesAdurcModel } from '../mocks/diff-names-adurc-model';
+import { bagEntities } from '../mocks/bag-entities';
 
 describe('query builder update tests', () => {
     it('update query without returning', () => {
@@ -34,6 +35,53 @@ UPDATE [Fake] WITH(ROWLOCK) SET
 \t[name] = 'Loremp ipsum'
 WHERE
 \t[id] = @id
+`.trim());
+    });
+
+    it('update query with multiples pks', () => {
+        const entities = EntityConverter.fromModels('mssql', bagEntities);
+        const userAgency = entities.find(x => x.info.name === 'UserAgency');
+
+        const context = UpdateQueryBuilder.build(entities, userAgency, {
+            where: {
+                userId: 159,
+            },
+            set: { agencyId: 9 },
+            select: {
+                userId: true,
+                agencyId: true,
+            }
+        });
+
+        const sql = context.toSql();
+
+        expect(context).toBeInstanceOf(UpdateContextQueryBuilder);
+
+        expect(context.entity).toEqual(userAgency);
+        expect(context.pks).toHaveLength(2);
+        expect(context.returning).not.toBeNull();
+        expect(context.tempTable).toEqual('@outputData');
+        expect(context.set).toEqual({ agencyId: 9 });
+
+        expect(sql).toEqual(`
+DECLARE @outputData AS TABLE(
+\t[userId] int,
+\t[agencyId] int
+)
+
+UPDATE [usr].[UserAgency] WITH(ROWLOCK) SET
+\t[agencyId] = 9
+OUTPUT INSERTED.[userId],INSERTED.[agencyId] INTO @outputData
+WHERE
+\t[userId] = @userId
+
+SELECT
+\t[root].[userId] AS [userId],
+\t[root].[agencyId] AS [agencyId]
+FROM [usr].[UserAgency] AS [root] WITH(NOLOCK)
+INNER JOIN @outputData AS [sourceData] ON
+\t[sourceData].[userId] = [root].[userId]
+\tAND [sourceData].[agencyId] = [root].[agencyId]
 `.trim());
     });
 
