@@ -1,67 +1,123 @@
-import { AdurcModelWhere } from '@adurc/core/dist/interfaces/client/where';
+import { AdurcModelWhereUntyped } from '@adurc/core/dist/interfaces/client/where';
 import { MSSQLEntity } from '../interfaces/mssql-entity';
 import { IWherableQueryBuilder, IConditionSide, IConditionQueryBuilder, Condition } from './find.context';
 
 export class WhereBuilder {
 
-    public static buildWhere(where: AdurcModelWhere<unknown>, entity: MSSQLEntity, context: IWherableQueryBuilder, source?: string): void {
-        const sourcePreffix = source ? `${source}_` : '';
+    public static buildWhere(where: AdurcModelWhereUntyped, entity: MSSQLEntity, context: IWherableQueryBuilder, source?: string): void {
+        context.where = [];
+        this.buildWhereNested(where, entity, context, context.where, source, '');
+    }
 
+    public static buildWhereNested(
+        where: AdurcModelWhereUntyped,
+        entity: MSSQLEntity,
+        context: IWherableQueryBuilder,
+        conditionsRef: Condition[],
+        source: string,
+        preffixParam: string,
+    ): void {
         for (const field in where) {
             const value = where[field];
-            if (field === '_AND' || field === '_OR') {
+
+            if (field === 'OR') {
                 // TODO: Pending implement subtree conditions _AND and _OR
-                throw new Error('Not implemented subtree conditions _AND and _OR');
+                throw new Error('Not implemented subtree conditions AND and OR');
             }
 
-            const column = entity.columns.find(x => x.info.accessorName === field);
-            if (column) {
-                const paramKey = sourcePreffix + field;
-
-                if (typeof value !== 'object') {
-                    context.params[paramKey] = value;
-                    context.where.push({ left: { type: 'column', source, column: column.columnName }, operator: '=', right: { type: 'variable', name: paramKey } });
-                } else {
-                    for (const operatorType in value) {
-                        const operatorValue = value[operatorType];
-                        const conditionValues: IConditionSide[] = [];
-                        switch (operatorType) {
-                            case 'equals':
-                                context.params[paramKey] = value;
-                                context.where.push({ left: { type: 'column', source, column: column.columnName }, operator: '=', right: { type: 'variable', name: paramKey } });
-                                break;
-                            case 'in':
-                                if (!(operatorValue instanceof Array)) throw new Error('Expected on operator "in" an array');
-                                for (let i = 0; i < operatorValue.length; i++) {
-                                    const indexedParamKey = paramKey + '_' + i;
-                                    context.params[indexedParamKey] = operatorValue[i];
-                                    conditionValues.push({ type: 'variable', name: indexedParamKey });
-                                }
-                                context.where.push({ left: { type: 'column', source, column: column.columnName }, operator: 'in', right: conditionValues });
-                                break;
-                        }
-                    }
+            if (field === 'AND') {
+                if (!(value instanceof Array)) throw new Error('Expected array values on AND filter');
+                const ands: Condition[] = [];
+                conditionsRef.push({
+                    ands,
+                });
+                let i = 0;
+                for (const v of value) {
+                    this.buildWhereNested(v, entity, context, ands, source, preffixParam + `and_${i++}`);
                 }
-            } else {
-                const relation = entity.relations.find(x => x.info.accessorName === field);
-                if (relation) {
-                    // TODO: Pending implement filter over relation
-                } else {
-                    throw new Error(`Unknown field name ${field}`);
-                }
+                continue;
             }
+
+            this.buildWhereField(context, entity, field, value, source, preffixParam)
+                .forEach(x => conditionsRef.push(x));
         }
     }
 
-    public static conditionsToSql(conditions: Condition[]): string {
+    public static buildWhereField(
+        context: IWherableQueryBuilder,
+        entity: MSSQLEntity,
+        field: string,
+        value: unknown,
+        source: string,
+        preffixParam: string,
+    ): Condition[] {
+        const output: Condition[] = [];
+
+        const column = entity.columns.find(x => x.info.accessorName === field);
+        if (column) {
+            const paramKey = (source && source.length > 0 ? source + '_' : '')
+                + (preffixParam && preffixParam.length > 0 ? preffixParam + '_' : '')
+                + field;
+
+            if (typeof value !== 'object') {
+                context.params[paramKey] = value;
+                output.push({ left: { type: 'column', source, column: column.columnName }, operator: '=', right: { type: 'variable', name: paramKey } });
+            } else {
+                for (const operatorType in value) {
+                    const operatorValue = value[operatorType];
+                    const conditionValues: IConditionSide[] = [];
+                    switch (operatorType) {
+                        case 'equals':
+                            context.params[paramKey] = value;
+                            output.push({ left: { type: 'column', source, column: column.columnName }, operator: '=', right: { type: 'variable', name: paramKey } });
+                            break;
+                        case 'in':
+                            if (!(operatorValue instanceof Array)) throw new Error('Expected on operator "in" an array');
+                            for (let i = 0; i < operatorValue.length; i++) {
+                                const indexedParamKey = paramKey + '_' + i;
+                                context.params[indexedParamKey] = operatorValue[i];
+                                conditionValues.push({ type: 'variable', name: indexedParamKey });
+                            }
+                            output.push({ left: { type: 'column', source, column: column.columnName }, operator: 'in', right: conditionValues });
+                            break;
+                    }
+                }
+            }
+        } else {
+            const relation = entity.relations.find(x => x.info.accessorName === field);
+            if (relation) {
+                // TODO: Pending implement filter over relation
+            } else {
+                throw new Error(`Unknown field name ${field}`);
+            }
+        }
+
+        return output;
+    }
+
+    public static conditionsToSql(conditions: Condition[], levels: number): string {
         const chunks: string[] = [];
+        let tabs = '';
+        for (let i = 0; i < levels; i++) {
+            tabs += '\t';
+        }
+
+        let isFirstCondition = true;
         for (const condition of conditions) {
-            if ('ands' in condition || 'ors' in condition) {
+            const preffix = isFirstCondition ? '' : 'AND ';
+
+            if ('ors' in condition) {
                 // TODO: Pending implement subtree conditions
                 throw new Error('Not implemented subtree conditions');
+            } else if ('ands' in condition) {
+                chunks.push(`${tabs}${preffix}(`);
+                chunks.push(this.conditionsToSql(condition.ands, levels + 1));
+                chunks.push(`${tabs})`);
             } else if ('left' in condition) {
-                chunks.push(`\t${this.toSqlCondition(condition)}`);
+                chunks.push(`${tabs}${preffix}${this.toSqlCondition(condition)}`);
             }
+
+            isFirstCondition = false;
         }
         return chunks.join('\n');
     }

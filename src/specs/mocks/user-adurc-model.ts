@@ -27,6 +27,12 @@ export const UserAdurcModel: AdurcModel = AdurcSchemaUtils.convertModelSchemaToM
             nonNull: true,
             directives: [],
         }, {
+            name: 'age',
+            type: 'int',
+            collection: false,
+            nonNull: false,
+            directives: [],
+        }, {
             name: 'profile',
             type: { model: 'Profile', source: 'mssql' },
             collection: false,

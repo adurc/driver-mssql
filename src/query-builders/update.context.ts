@@ -49,7 +49,7 @@ export class UpdateContextQueryBuilder implements IWherableQueryBuilder {
         }
         if (this.where.length > 0) {
             chunks.push('WHERE');
-            chunks.push(WhereBuilder.conditionsToSql(this.where));
+            chunks.push(WhereBuilder.conditionsToSql(this.where, 1));
         }
 
         if (this.returning) {

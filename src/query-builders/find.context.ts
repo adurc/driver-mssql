@@ -50,8 +50,8 @@ export interface IJoinQueryBuilder {
 }
 
 export interface ITreeCondition {
-    ands: Condition[];
-    ors: Condition[];
+    ands?: Condition[];
+    ors?: Condition[];
 }
 
 export type Condition = (IConditionQueryBuilder | ITreeCondition);
@@ -136,12 +136,12 @@ export class FindContextQueryBuilder implements IWherableQueryBuilder, IOrderabl
 
         for (const join of this.joins) {
             chunks.push(`${join.type.toUpperCase()} JOIN ${join.from.type === 'table' ? this.toSqlTableAccessor(join.from) : this.toSqlObjectAccessor(join.from)} ON`);
-            chunks.push(WhereBuilder.conditionsToSql(join.conditions));
+            chunks.push(WhereBuilder.conditionsToSql(join.conditions, 1));
         }
 
         if (this.where.length > 0) {
             chunks.push('WHERE');
-            chunks.push(WhereBuilder.conditionsToSql(this.where));
+            chunks.push(WhereBuilder.conditionsToSql(this.where, 1));
         }
 
         if (this.orderBy.length > 0) {

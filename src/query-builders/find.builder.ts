@@ -1,5 +1,6 @@
 import { AdurcFindManyArgs } from '@adurc/core/dist/interfaces/client/find-many.args';
 import { AdurcModelInclude } from '@adurc/core/dist/interfaces/client/include';
+import { AdurcModelUntyped } from '@adurc/core/dist/interfaces/client/model';
 import { AdurcModelSelect } from '@adurc/core/dist/interfaces/client/select';
 import { AdurcModelOrderBy } from '@adurc/core/dist/interfaces/client/sort';
 import { MSSQLEntity } from '../interfaces/mssql-entity';
@@ -49,12 +50,8 @@ export class FindQueryBuilder {
         }
     }
 
-    public static buildSelect(select: AdurcModelSelect<unknown>, entity: MSSQLEntity, context: FindContextQueryBuilder): void {
+    public static buildSelect(select: AdurcModelSelect, entity: MSSQLEntity, context: FindContextQueryBuilder): void {
         for (const field in select) {
-            if (select[field] === false) {
-                continue;
-            }
-
             const column = entity.columns.find(x => x.info.accessorName === field);
 
             context.columns.push({
@@ -65,7 +62,7 @@ export class FindQueryBuilder {
         }
     }
 
-    public static buildInclude(include: AdurcModelInclude<unknown>, entity: MSSQLEntity, context: FindContextQueryBuilder): void {
+    public static buildInclude(include: AdurcModelInclude<AdurcModelUntyped>, entity: MSSQLEntity, context: FindContextQueryBuilder): void {
         for (const field in include) {
             const value = include[field];
 
@@ -77,13 +74,13 @@ export class FindQueryBuilder {
 
             switch (relation.type) {
                 case 'manyToMany':
-                    this.buildManyToMany(relation, context, value);
+                    this.buildManyToMany(relation, context, value as AdurcFindManyArgs);
                     break;
                 case 'manyToOne':
                     this.buildManyToOne(relation, context, value);
                     break;
                 case 'oneToMany':
-                    this.buildOneToMany(relation, context, value);
+                    this.buildOneToMany(relation, context, value as AdurcFindManyArgs);
                     break;
                 default:
                     throw new Error(`Relation type ${(relation as { type: string }).type} not implemented`);
