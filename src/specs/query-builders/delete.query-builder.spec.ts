@@ -4,6 +4,7 @@ import { SimpleAdurcModel } from '../mocks/simple-adurc-model';
 import { DeleteQueryBuilder } from '../../query-builders/delete.builder';
 import { DeleteContextQueryBuilder } from '../../query-builders/delete.context';
 import { DiffNamesAdurcModel } from '../mocks/diff-names-adurc-model';
+import { bagEntities } from '../mocks/bag-entities';
 
 describe('query builder delete tests', () => {
     it('delete query without returning', () => {
@@ -29,6 +30,48 @@ describe('query builder delete tests', () => {
 DELETE FROM [Fake] WITH(ROWLOCK)
 WHERE
 \t[id] = @id
+`.trim());
+    });
+
+    it('update query with multiples pks', () => {
+        const entities = EntityConverter.fromModels('mssql', bagEntities);
+        const userAgency = entities.find(x => x.info.name === 'UserAgency');
+
+        const context = DeleteQueryBuilder.build(entities, userAgency, {
+            where: {
+                userId: 159,
+                agencyId: 9,
+            },
+            select: {
+                userId: true,
+                agencyId: true,
+            }
+        });
+
+        const sql = context.toSql();
+
+        expect(context).toBeInstanceOf(DeleteContextQueryBuilder);
+
+        expect(context.entity).toEqual(userAgency);
+        expect(context.returning).not.toBeNull();
+        expect(context.tempTable).toEqual('@outputData');
+
+        expect(sql).toEqual(`
+DECLARE @outputData AS TABLE(
+\t[userId] int,
+\t[agencyId] int
+)
+
+DELETE FROM [usr].[UserAgency] WITH(ROWLOCK)
+OUTPUT DELETED.[userId],DELETED.[agencyId] INTO @outputData
+WHERE
+\t[userId] = @userId
+\tAND [agencyId] = @agencyId
+
+SELECT
+\t[root].[userId] AS [userId],
+\t[root].[agencyId] AS [agencyId]
+FROM @outputData AS [root]
 `.trim());
     });
 
